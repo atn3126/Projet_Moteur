@@ -137,6 +137,7 @@
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="GenerateObj.cpp" />
     <ClCompile Include="MathHelper.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -148,6 +149,7 @@
     <ClInclude Include="GenerateObj.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="UploadBuffer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

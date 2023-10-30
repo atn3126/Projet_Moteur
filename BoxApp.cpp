@@ -11,6 +11,7 @@
 #include "d3dApp.h"
 #include "MathHelper.h"
 #include "UploadBuffer.h"
+#include "Transform.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -151,6 +152,7 @@ void BoxApp::OnResize()
 
 void BoxApp::Update(const GameTimer& gt)
 {
+    Transform transform;
     // Convert Spherical to Cartesian coordinates.
     float x = mRadius*sinf(mPhi)*cosf(mTheta);
     float z = mRadius*sinf(mPhi)*sinf(mTheta);
