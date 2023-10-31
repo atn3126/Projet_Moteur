@@ -14,19 +14,6 @@ public :
 
 private :
 
-	struct TRANSFORM
-	{
-
-		XMVECTOR vSca;
-		XMVECTOR vDir;
-		XMVECTOR vRight;
-		XMVECTOR vUp;
-		XMFLOAT4 qRot;
-		XMMATRIX mRot;
-		XMVECTOR vPos;
-		XMMATRIX matrix;
-
-	};
 
 	void Identity();
 	void FromMatrix(XMMATRIX* pMat);
