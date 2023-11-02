@@ -11,7 +11,7 @@
 #include "d3dApp.h"
 #include "MathHelper.h"
 #include "UploadBuffer.h"
-#include "GeometryGenerator.h"
+#include "CreateGeometry.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -21,7 +21,6 @@ using namespace DirectX::PackedVector;
 struct ObjectConstants
 {
     XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
-    XMFLOAT3 translation;
 };
 
 struct PassConstants {
@@ -178,10 +177,11 @@ bool BoxApp::Initialize()
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
  
     BuildDescriptorHeaps();
-	BuildConstantBuffers();
     BuildRootSignature();
     BuildShadersAndInputLayout();
-    BuildBoxGeometry();
+    BuildShapeGeometry();
+    BuildConstantBuffers();
+    BuildRenderItems();
     BuildPSO();
 
     // Execute the initialization commands.
@@ -293,8 +293,6 @@ void BoxApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vect
         UINT cbvIndex = (UINT)mOpaqueRitems.size() + ri->ObjCBIndex;
         auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
             mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-        cbvHandle.Offset(cbvIndex, mCbvSrvUavDescriptorSize);
-
         cmdList->SetGraphicsRootDescriptorTable(0, cbvHandle);
         cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
     }
@@ -337,6 +335,7 @@ void BoxApp::Draw(const GameTimer& gt)
         mCbvHeap->GetGPUDescriptorHandleForHeapStart());
     passCbvHandle.Offset(passCbvIndex, mCbvSrvUavDescriptorSize);
     mCommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
+
     DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
     
     // Indicate a state transition on the resource usage.
@@ -525,7 +524,7 @@ void BoxApp::BuildShadersAndInputLayout()
 
 void BoxApp::BuildRenderItems() {
     auto boxRitem = std::make_unique<RenderItem>();
-    XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(2.0f,2.0f,2.0f)*XMMatrixTranslation(0.0f, 0.5f,0.0f));
+    XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(1.0f,1.0f,1.0f)*XMMatrixTranslation(0.0f, 0.5f,0.0f));
     boxRitem->ObjCBIndex = 0;
     boxRitem->Geo = mGeometries["shapeGeo"].get();
     boxRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -535,6 +534,17 @@ void BoxApp::BuildRenderItems() {
     boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].
         BaseVertexLocation;
     mAllRitems.push_back(std::move(boxRitem));
+    UINT objCBIndex = 1;
+    auto leftSphereRitem = std::make_unique<RenderItem>();
+    XMMATRIX leftSphereWorld = XMMatrixTranslation(-5.0f, 3.5f, -10.0f);
+    XMStoreFloat4x4(&leftSphereRitem->World, leftSphereWorld);
+    leftSphereRitem->ObjCBIndex = objCBIndex++;
+    leftSphereRitem->Geo = mGeometries["shapeGeo"].get();
+    leftSphereRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    leftSphereRitem->IndexCount = leftSphereRitem->Geo -> DrawArgs["sphere"].IndexCount;
+    leftSphereRitem->StartIndexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
+    leftSphereRitem->BaseVertexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
+    mAllRitems.push_back(std::move(leftSphereRitem));
 
     for (auto& e : mAllRitems) {
         mOpaqueRitems.push_back(e.get());
@@ -543,15 +553,26 @@ void BoxApp::BuildRenderItems() {
 }
 
 void BoxApp::BuildShapeGeometry() {
-    GeometryGenerator geoGen;
-    GeometryGenerator::MeshData box = geoGen.CreateBox(1.5f, 0.5f, 1.5f, 3);
+    CreateGeometry geoGen;
+    CreateGeometry::MeshData box = geoGen.CreateBox(.5f, 0.5f, 1.5f, 3);
+    CreateGeometry::MeshData sphere = geoGen.CreateSphere(0.5f, 20,20);
     UINT boxVertexOffset = 0;
     UINT boxIndexOffset = 0;
+    UINT sphereVertexOffset = (UINT)box.Vertices.size();
+    UINT sphereIndexOffset = (UINT)box.Indices32.size();
+
+
     SubmeshGeometry boxSubmesh;
     boxSubmesh.IndexCount = (UINT)box.Indices32.size();
     boxSubmesh.StartIndexLocation = boxIndexOffset;
     boxSubmesh.BaseVertexLocation = boxVertexOffset;
-    auto totalVertexCount = box.Vertices.size();
+
+    SubmeshGeometry sphereSubmesh;
+    sphereSubmesh.IndexCount = (UINT)sphere.Indices32.size();
+    sphereSubmesh.StartIndexLocation = sphereIndexOffset;
+    sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
+
+    auto totalVertexCount = box.Vertices.size() + sphere.Vertices.size();
     std::vector<Vertex> vertices(totalVertexCount);
     UINT k = 0;
     for (size_t i = 0; i < box.Vertices.size(); ++i, ++k)
@@ -559,10 +580,19 @@ void BoxApp::BuildShapeGeometry() {
         vertices[k].Pos = box.Vertices[i].Position;
         vertices[k].Color = XMFLOAT4(DirectX::Colors::DarkGreen);
     }
+    for (size_t i = 0; i < sphere.Vertices.size(); ++i, ++k)
+    {
+        vertices[k].Pos = sphere.Vertices[i].Position;
+        vertices[k].Color = XMFLOAT4(DirectX::Colors::Crimson);
+    }
+
     std::vector<std::uint16_t> indices;
     indices.insert(indices.end(),
         std::begin(box.GetIndices16()),
         std::end(box.GetIndices16()));
+    indices.insert(indices.end(),
+        std::begin(sphere.GetIndices16()),
+        std::end(sphere.GetIndices16()));
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
     const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
@@ -583,8 +613,10 @@ void BoxApp::BuildShapeGeometry() {
     geo->IndexFormat = DXGI_FORMAT_R16_UINT;
     geo->IndexBufferByteSize = ibByteSize;
     geo->DrawArgs["box"] = boxSubmesh;
-
+    geo->DrawArgs["sphere"] = sphereSubmesh;
     mGeometries[geo->Name] = std::move(geo);
+
+
 }
 
 void BoxApp::BuildBoxGeometry()

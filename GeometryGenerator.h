@@ -84,7 +84,7 @@ public:
 	/// Creates a sphere centered at the origin with the given radius.  The
 	/// slices and stacks parameters control the degree of tessellation.
 	///</summary>
-    MeshData CreateSphere(float radius, uint32 sliceCount, uint32 stackCount);
+    MeshData CreateSphere(float radius, uint32 sliceCount);
 
 	///<summary>
 	/// Creates a geosphere centered at the origin with the given radius.  The

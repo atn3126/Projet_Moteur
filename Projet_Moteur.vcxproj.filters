@@ -33,10 +33,13 @@
     <ClCompile Include="GameTimer.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="GenerateObj.cpp">
+    <ClCompile Include="MathHelper.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="MathHelper.cpp">
+    <ClCompile Include="GeometryGenerator.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateGeometry.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -69,6 +72,9 @@
       <Filter>Fichiers sources</Filter>
     </ClInclude>
     <ClInclude Include="UploadBuffer.h">
+      <Filter>Fichiers sources</Filter>
+    </ClInclude>
+    <ClInclude Include="CreateGeometry.h">
       <Filter>Fichiers sources</Filter>
     </ClInclude>
   </ItemGroup>
