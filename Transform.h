@@ -30,5 +30,5 @@ private :
 	void RotateWorldY(float angle);
 	void RotateWorldZ(float angle);
 
-	void MultiplyFloat4X4(XMFLOAT4X4 mat1, XMFLOAT4X4 mat2);
+	XMFLOAT4X4 MultiplyFloat4X4(XMFLOAT4X4 mat1, XMFLOAT4X4 mat2);
 };
