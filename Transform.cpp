@@ -29,65 +29,7 @@ void Transform::Identity()
 	id.mPos = MathHelper::Identity4x4();
 }
 
-void Transform::UpdateRotationFromVectors()
-{
-	TRANSFORM mat;
-	mat.qRot.x = sqrt(1 + mat.vDir.x + mat.vRight.y + mat.vUp.z)/2;
-	mat.qRot.y = (mat.vUp.y - mat.vRight.z)/(4 * mat.qRot.x);
-	mat.qRot.z = (mat.vDir.z - mat.vUp.x) / (4 * mat.qRot.x);
-	mat.qRot.w = (mat.vRight.x - mat.vDir.y) / (4 * mat.qRot.x);
-}
 
-void Transform::UpdateRotationFromQuaternion()
-{
-	TRANSFORM mat;
-	mat.mRot._11 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.y * mat.qRot.y) - 1;
-	mat.mRot._12 = 2 * (mat.qRot.y * mat.qRot.z - mat.qRot.x * mat.qRot.w);
-	mat.mRot._13 = 2 * (mat.qRot.y * mat.qRot.w + mat.qRot.x * mat.qRot.z);
-
-	mat.mRot._21 = 2 * (mat.qRot.y * mat.qRot.z + mat.qRot.x * mat.qRot.w);
-	mat.mRot._22 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.z * mat.qRot.z) - 1;
-	mat.mRot._23 = 2 * (mat.qRot.z * mat.qRot.w - mat.qRot.x * mat.qRot.y);
-
-	mat.mRot._31 = 2 * (mat.qRot.y * mat.qRot.w - mat.qRot.x * mat.qRot.z);
-	mat.mRot._32 = 2 * (mat.qRot.z * mat.qRot.w + mat.qRot.x * mat.qRot.y);
-	mat.mRot._33 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.w * mat.qRot.w) - 1;
-}
-
-void Transform::UpdateRotationFromMatrix()
-{
-}
-
-void Transform::UpdateMatrix()
-{
-	TRANSFORM mat;
-	mat.mWorld = mat.mSca;
-	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mRot);
-	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mPos);
-}
-
-void Transform::Rotate(float yaw, float pitch, float roll)
-{
-	/*XMMatrixRotationRollPitchYaw(yaw, pitch, roll);*/
-	
-	/*
-	RotateYaw(float yaw);
-	RotatePitch(float pitch);
-	RotateRoll(float roll);
-	
-	TRANSFORM mat;
-	mat.mRot._11 = mat.vDir.x;
-	mat.mRot._12 = mat.vDir.y;
-	mat.mRot._13 = mat.vDir.z;
-	
-	mat.mRot._21 = mat.vRight.x;
-	mat.mRot._22 = mat.vRight.y;
-	mat.mRot._23 = mat.vRight.z;
-	
-	mat.mRot._31 = mat.vUp.x;
-	mat.mRot._32 = mat.vUp.y;
-	mat.mRot._33 = mat.vUp.z;*/
-}
 
 void Transform::RotateYaw(float angle)
 {
@@ -115,6 +57,72 @@ void Transform::RotateRoll(float angle)
 	mat.vUp.z = angle;
 	/*XMMatrixRotationZ(angle);*/
 }
+
+
+void Transform::UpdateRotationFromVectors()
+{
+	TRANSFORM mat;
+	mat.qRot.x = sqrt(1 + mat.vDir.x + mat.vRight.y + mat.vUp.z)/2;
+	mat.qRot.y = (mat.vUp.y - mat.vRight.z)/(4 * mat.qRot.x);
+	mat.qRot.z = (mat.vDir.z - mat.vUp.x) / (4 * mat.qRot.x);
+	mat.qRot.w = (mat.vRight.x - mat.vDir.y) / (4 * mat.qRot.x);
+}
+
+void Transform::UpdateRotationFromQuaternion()
+{
+	TRANSFORM mat;
+	mat.mRot._11 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.y * mat.qRot.y) - 1;
+	mat.mRot._12 = 2 * (mat.qRot.y * mat.qRot.z - mat.qRot.x * mat.qRot.w);
+	mat.mRot._13 = 2 * (mat.qRot.y * mat.qRot.w + mat.qRot.x * mat.qRot.z);
+
+	mat.mRot._21 = 2 * (mat.qRot.y * mat.qRot.z + mat.qRot.x * mat.qRot.w);
+	mat.mRot._22 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.z * mat.qRot.z) - 1;
+	mat.mRot._23 = 2 * (mat.qRot.z * mat.qRot.w - mat.qRot.x * mat.qRot.y);
+
+	mat.mRot._31 = 2 * (mat.qRot.y * mat.qRot.w - mat.qRot.x * mat.qRot.z);
+	mat.mRot._32 = 2 * (mat.qRot.z * mat.qRot.w + mat.qRot.x * mat.qRot.y);
+	mat.mRot._33 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.w * mat.qRot.w) - 1;
+}
+
+void Transform::UpdateMatrix()
+{
+	TRANSFORM mat;
+	mat.mWorld = mat.mSca;
+	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mRot);
+	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mPos);
+}
+
+void Transform::Rotate(float yaw, float pitch, float roll)
+{
+	/*XMMatrixRotationRollPitchYaw(yaw, pitch, roll);*/
+
+	/*
+	RotateYaw(float yaw);
+	RotatePitch(float pitch);
+	RotateRoll(float roll);
+
+	TRANSFORM mat;
+	mat.mRot._11 = mat.vDir.x;
+	mat.mRot._12 = mat.vDir.y;
+	mat.mRot._13 = mat.vDir.z;
+
+	mat.mRot._21 = mat.vRight.x;
+	mat.mRot._22 = mat.vRight.y;
+	mat.mRot._23 = mat.vRight.z;
+
+	mat.mRot._31 = mat.vUp.x;
+	mat.mRot._32 = mat.vUp.y;
+	mat.mRot._33 = mat.vUp.z;*/
+	Identity();
+	RotateYaw(yaw);
+	RotatePitch(pitch);
+	RotateRoll(roll);
+	UpdateRotationFromVectors();
+	UpdateRotationFromQuaternion();
+	UpdateMatrix();
+}
+
+/*==============================================*/
 
 XMFLOAT4X4 Transform::MultiplyFloat4X4(XMFLOAT4X4 mat1, XMFLOAT4X4 mat2)
 {
