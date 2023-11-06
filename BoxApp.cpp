@@ -180,7 +180,7 @@ void BoxApp::Update(const GameTimer& gt)
 
         ObjectConstants objConstants;
         XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
-        mObjectCB->CopyData(e->ObjCBIndex, objConstants);
+        e->mObjectCB->CopyData(0, objConstants);
     }
 
     XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
@@ -227,7 +227,7 @@ void BoxApp::DrawRenderItems() {
         //auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
         //    mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 
-        mCommandList->SetGraphicsRootConstantBufferView(0, mObjectCB->Resource()->GetGPUVirtualAddress());
+        mCommandList->SetGraphicsRootConstantBufferView(0, ri->mObjectCB->Resource()->GetGPUVirtualAddress());
         mCommandList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
     }
 

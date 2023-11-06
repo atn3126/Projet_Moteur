@@ -39,10 +39,6 @@ struct RenderItem {
 	UINT StartIndexLocation = 0;
 	int BaseVertexLocation = 0;
 
-	std::unique_ptr<UploadBuffer<ObjectConstants>>& GetObjectCB() {
-		return mObjectCB;
-	}
-
 };
 
 

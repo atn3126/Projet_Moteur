@@ -124,7 +124,7 @@ std::vector<std::unique_ptr<RenderItem>>& GameObject::GetAllItems()
 
 void GameObject::BuildObjectConstantBuffers(ComPtr<ID3D12Device> device, std::unique_ptr<RenderItem>* object)
 {
-	object->get()->GetObjectCB() = std::make_unique<UploadBuffer<ObjectConstants>>(device.Get(), 1, true);
+	object->get()->mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(device.Get(), 1, true);
 }
 
 
