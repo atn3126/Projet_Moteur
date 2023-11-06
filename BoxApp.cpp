@@ -12,21 +12,29 @@
 #include "MathHelper.h"
 #include "UploadBuffer.h"
 #include "Transform.h"
+#include "CreateGeometry.h"
+#include "GameObject.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
-struct Vertex
-{
-    XMFLOAT3 Pos;
-    XMFLOAT4 Color;
-};
 
-struct ObjectConstants
-{
-    XMFLOAT4X4 WorldViewProj = MathHelper::Identity4x4();
-    XMFLOAT3 translation;
+struct PassConstants {
+    XMFLOAT4X4 View;
+    XMFLOAT4X4 InvView;
+    XMFLOAT4X4 Proj;
+    XMFLOAT4X4 InvProj;
+    XMFLOAT4X4 ViewProj;
+    XMFLOAT4X4 InvViewProj;
+    XMFLOAT3 EyePosW;
+    float cbPerObjectPad1;
+    XMFLOAT2 RenderTargetSize;
+    XMFLOAT2 InvRenderTargetSize;
+    float NearZ;
+    float FarZ;
+    float TotalTime;
+    float DeltaTime;
 };
 
 class BoxApp : public D3DApp
@@ -42,7 +50,9 @@ public:
 private:
     virtual void OnResize()override;
     virtual void Update(const GameTimer& gt)override;
+    void DrawRenderItems();
     virtual void Draw(const GameTimer& gt)override;
+
 
     virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
     virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
@@ -61,8 +71,16 @@ private:
     ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
     ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
 
-    std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
+    GameObject gameObject;
+    std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
 
+    //Constant Buffer
+    std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
+    std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
+
+    //Stock RenderItem
+
+    UINT mPassCbvOffset =0;
 	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
 
     ComPtr<ID3DBlob> mvsByteCode = nullptr;
@@ -122,12 +140,15 @@ bool BoxApp::Initialize()
 		
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
- 
-    BuildDescriptorHeaps();
-	BuildConstantBuffers();
+
     BuildRootSignature();
     BuildShadersAndInputLayout();
-    BuildBoxGeometry();
+    gameObject.Init(mCommandList,md3dDevice);
+    gameObject.BuildRenderOpBox(md3dDevice);
+    gameObject.BuildRenderOpCircle(md3dDevice);
+
+    BuildDescriptorHeaps();
+    BuildConstantBuffers();
     BuildPSO();
 
     // Execute the initialization commands.
@@ -157,38 +178,68 @@ void BoxApp::Update(const GameTimer& gt)
     float x = mRadius*sinf(mPhi)*cosf(mTheta);
     float z = mRadius*sinf(mPhi)*sinf(mTheta);
     float y = mRadius*cosf(mPhi);
+    for (auto& e : gameObject.GetAllItems()) {
+        XMMATRIX world = XMLoadFloat4x4(&e->World);
 
-    XMMATRIX rotXMat = XMMatrixRotationX(0.001f);
-    XMMATRIX rotYMat = XMMatrixRotationY(0.002f);
-    XMMATRIX rotZMat = XMMatrixRotationZ(0.003f);
+        ObjectConstants objConstants;
+        XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+        e->mObjectCB->CopyData(0, objConstants);
+    }
 
-    XMMATRIX rotMat = XMLoadFloat4x4(&CubeRotMat) * rotXMat * rotYMat * rotZMat;
-    XMStoreFloat4x4(&CubeRotMat, rotMat);
-
-    XMMATRIX translationMat = XMMatrixTranslationFromVector(XMLoadFloat4(&CubePos));
-    XMMATRIX worldMat = rotMat * translationMat;
-    XMStoreFloat4x4(&mWorld, worldMat);
-
-    // Build the view matrix.
     XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
     XMVECTOR target = XMVectorZero();
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
     XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-    XMStoreFloat4x4(&mView, view);
-
-    XMMATRIX world = XMLoadFloat4x4(&mWorld);
     XMMATRIX proj = XMLoadFloat4x4(&mProj);
     XMMATRIX worldViewProj = world * view * proj;
 
-	// Update the constant buffer with the latest worldViewProj matrix.
-	ObjectConstants objConstants;
-    XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
-    mObjectCB->CopyData(0, objConstants);
+    XMMATRIX viewProj = XMMatrixMultiply(view,proj);
+
+    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view),view);
+    XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
+    XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
+
+    PassConstants mMainPassCB;
+    XMStoreFloat4x4(&mMainPassCB.View, XMMatrixTranspose(view));
+    XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
+    XMStoreFloat4x4(&mMainPassCB.Proj, XMMatrixTranspose(proj));
+    XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
+    XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
+    XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
+    mMainPassCB.RenderTargetSize = XMFLOAT2((float)mClientWidth, (float)
+        mClientHeight);
+    mMainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / mClientWidth, 1.0f
+        / mClientHeight);
+    mMainPassCB.NearZ = 1.0f;
+    mMainPassCB.FarZ = 1000.0f;
+    mMainPassCB.TotalTime = gt.TotalTime();
+    mMainPassCB.DeltaTime = gt.DeltaTime();
+    PassCB->CopyData(0, mMainPassCB);
+}
+
+void BoxApp::DrawRenderItems() {
+    
+    UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+
+    for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++) {
+        auto ri = gameObject.GetOpaqueItems()[i];
+        mCommandList->IASetVertexBuffers(0,1,&ri->Geo->VertexBufferView());
+        mCommandList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
+        mCommandList->IASetPrimitiveTopology(ri->PrimitiveType);
+
+        //UINT cbvIndex = (UINT)gameObject.GetOpaqueItems().size() + ri->ObjCBIndex;
+        //auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+        //    mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+
+        mCommandList->SetGraphicsRootConstantBufferView(0, ri->mObjectCB->Resource()->GetGPUVirtualAddress());
+        mCommandList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+    }
+
 }
 
 void BoxApp::Draw(const GameTimer& gt)
 {
+
     // Reuse the memory associated with command recording.
     // We can only reset when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
@@ -216,16 +267,15 @@ void BoxApp::Draw(const GameTimer& gt)
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-	mCommandList->IASetVertexBuffers(0, 1, &mBoxGeo->VertexBufferView());
-	mCommandList->IASetIndexBuffer(&mBoxGeo->IndexBufferView());
-    mCommandList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    
-    mCommandList->SetGraphicsRootDescriptorTable(0, mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 
-    mCommandList->DrawIndexedInstanced(
-		mBoxGeo->DrawArgs["box"].IndexCount, 
-		1, 0, 0, 0);
-	
+    //int passCbvIndex = mPassCbvOffset;
+    //auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
+    //    mCbvHeap->GetGPUDescriptorHandleForHeapStart());
+    //passCbvHandle.Offset(passCbvIndex, mCbvSrvUavDescriptorSize);
+    mCommandList->SetGraphicsRootConstantBufferView(1, PassCB->Resource()->GetGPUVirtualAddress());
+
+    DrawRenderItems();
+    
     // Indicate a state transition on the resource usage.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -294,8 +344,12 @@ void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
 
 void BoxApp::BuildDescriptorHeaps()
 {
+    UINT objCount = (UINT)gameObject.GetOpaqueItems().size();
+
+    UINT numDescriptor = (objCount + 1);
+    mPassCbvOffset = objCount;
     D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
-    cbvHeapDesc.NumDescriptors = 1;
+    cbvHeapDesc.NumDescriptors = numDescriptor;
     cbvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     cbvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvHeapDesc.NodeMask = 0;
@@ -305,22 +359,26 @@ void BoxApp::BuildDescriptorHeaps()
 
 void BoxApp::BuildConstantBuffers()
 {
-	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
 
-	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+    mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
+    PassCB = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
 
-	D3D12_GPU_VIRTUAL_ADDRESS cbAddress = mObjectCB->Resource()->GetGPUVirtualAddress();
+    UINT passObjCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(PassConstants));
+
+    D3D12_GPU_VIRTUAL_ADDRESS passCbAddress = PassCB->Resource()->GetGPUVirtualAddress();
+
+    int heapIndex = mPassCbvOffset;
     // Offset to the ith object constant buffer in the buffer.
-    int boxCBufIndex = 0;
-	cbAddress += boxCBufIndex*objCBByteSize;
+    auto handle = CD3DX12_CPU_DESCRIPTOR_HANDLE(
+        mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+    handle.Offset(heapIndex, mCbvSrvUavDescriptorSize);
 
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
-	cbvDesc.BufferLocation = cbAddress;
-	cbvDesc.SizeInBytes = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+    D3D12_CONSTANT_BUFFER_VIEW_DESC passCbvDesc;
+    passCbvDesc.BufferLocation = passCbAddress;
+    passCbvDesc.SizeInBytes = passObjCBByteSize;
 
-	md3dDevice->CreateConstantBufferView(
-		&cbvDesc,
-		mCbvHeap->GetCPUDescriptorHandleForHeapStart());
+    md3dDevice->CreateConstantBufferView(
+        &passCbvDesc, handle);
 }
 
 void BoxApp::BuildRootSignature()
@@ -332,15 +390,19 @@ void BoxApp::BuildRootSignature()
 	// thought of as defining the function signature.  
 
 	// Root parameter can be a table, root descriptor or root constants.
-	CD3DX12_ROOT_PARAMETER slotRootParameter[1];
+	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
 
 	// Create a single descriptor table of CBVs.
-	CD3DX12_DESCRIPTOR_RANGE cbvTable;
-	cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
-	slotRootParameter[0].InitAsDescriptorTable(1, &cbvTable);
+	//CD3DX12_DESCRIPTOR_RANGE cbvTable0;
+	//cbvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+ //   CD3DX12_DESCRIPTOR_RANGE cbvTable1;
+ //   cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
+
+	slotRootParameter[0].InitAsConstantBufferView(0);
+    slotRootParameter[1].InitAsConstantBufferView(1);
 
 	// A root signature is an array of root parameters.
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(1, slotRootParameter, 0, nullptr, 
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 0, nullptr, 
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
 	// create a root signature with a single slot which points to a descriptor range consisting of a single constant buffer
@@ -376,86 +438,85 @@ void BoxApp::BuildShadersAndInputLayout()
     };
 }
 
-void BoxApp::BuildBoxGeometry()
-{
-    std::array<Vertex, 8> vertices =
-    {
-        Vertex({ XMFLOAT3(-.5f, -.5f, -.5f), XMFLOAT4(Colors::White) }),
-		Vertex({ XMFLOAT3(-.5f, +.5f, -.5f), XMFLOAT4(Colors::Black) }),
-		Vertex({ XMFLOAT3(+.5f, +.5f, -.5f), XMFLOAT4(Colors::Red) }),
-		Vertex({ XMFLOAT3(+.5f, -.5f, -.5f), XMFLOAT4(Colors::Green) }),
-		Vertex({ XMFLOAT3(-.5f, -.5f, +.5f), XMFLOAT4(Colors::Blue) }),
-		Vertex({ XMFLOAT3(-.5f, +.5f, +.5f), XMFLOAT4(Colors::Yellow) }),
-		Vertex({ XMFLOAT3(+.5f, +.5f, +.5f), XMFLOAT4(Colors::Cyan) }),
-		Vertex({ XMFLOAT3(+.5f, -.5f, +.5f), XMFLOAT4(Colors::Magenta) })
-    };
-
-	std::array<std::uint16_t, 36> indices =
-	{
-		// front face
-		1, 3, 0,
-		2, 3, 1,
-
-		// back face
-		6, 4, 7,
-		5, 4, 6,
-
-		// left face
-		5, 0, 4,
-		1, 0, 5,
-
-		// right face
-		3, 6, 7,
-		2, 6, 3,
-
-		// top face
-		1, 6, 2,
-		5, 6, 1,
-
-		// bottom face
-		7, 0, 3,
-		4, 0, 7
-	};
-
-    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
-
-	mBoxGeo = std::make_unique<MeshGeometry>();
-	mBoxGeo->Name = "boxGeo";
-
-	ThrowIfFailed(D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU));
-	CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-	ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
-	CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-	mBoxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), vertices.data(), vbByteSize, mBoxGeo->VertexBufferUploader);
-
-	mBoxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-		mCommandList.Get(), indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
-
-	mBoxGeo->VertexByteStride = sizeof(Vertex);
-	mBoxGeo->VertexBufferByteSize = vbByteSize;
-	mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
-	mBoxGeo->IndexBufferByteSize = ibByteSize;
-
-	SubmeshGeometry submesh;
-	submesh.IndexCount = (UINT)indices.size();
-	submesh.StartIndexLocation = 0;
-	submesh.BaseVertexLocation = 0;
-
-	mBoxGeo->DrawArgs["box"] = submesh;
-
-
-    CubePos = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-    XMVECTOR posVec = XMLoadFloat4(&CubePos); 
-
-    XMMATRIX tmpMat = XMMatrixTranslationFromVector(posVec); 
-    XMStoreFloat4x4(&CubeRotMat, XMMatrixIdentity()); 
-    XMStoreFloat4x4(&mWorld, tmpMat); 
-
-}
+//void BoxApp::BuildBoxGeometry()
+//{
+//    std::array<Vertex, 8> vertices =
+//    {
+//        Vertex({ XMFLOAT3(-.5f, -.5f, -.5f), XMFLOAT4(Colors::White) }),
+//        Vertex({ XMFLOAT3(-.5f, +.5f, -.5f), XMFLOAT4(Colors::Black) }),
+//        Vertex({ XMFLOAT3(+.5f, +.5f, -.5f), XMFLOAT4(Colors::Red) }),
+//        Vertex({ XMFLOAT3(+.5f, -.5f, -.5f), XMFLOAT4(Colors::Green) }),
+//        Vertex({ XMFLOAT3(-.5f, -.5f, +.5f), XMFLOAT4(Colors::Blue) }),
+//        Vertex({ XMFLOAT3(-.5f, +.5f, +.5f), XMFLOAT4(Colors::Yellow) }),
+//        Vertex({ XMFLOAT3(+.5f, +.5f, +.5f), XMFLOAT4(Colors::Cyan) }),
+//        Vertex({ XMFLOAT3(+.5f, -.5f, +.5f), XMFLOAT4(Colors::Magenta) })
+//    };
+//
+//    std::array<std::uint16_t, 36> indices =
+//    {
+//        // front face
+//        1, 3, 0,
+//        2, 3, 1,
+//
+//        // back face
+//        6, 4, 7,
+//        5, 4, 6,
+//
+//        // left face
+//        5, 0, 4,
+//        1, 0, 5,
+//
+//        // right face
+//        3, 6, 7,
+//        2, 6, 3,
+//
+//        // top face
+//        1, 6, 2,
+//        5, 6, 1,
+//
+//        // bottom face
+//        7, 0, 3,
+//        4, 0, 7
+//    };
+//
+//    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
+//    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
+//
+//    mBoxGeo = std::make_unique<MeshGeometry>();
+//    mBoxGeo->Name = "boxGeo";
+//
+//    ThrowIfFailed(D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU));
+//    CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
+//
+//    ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
+//    CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
+//
+//    mBoxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+//        mCommandList.Get(), vertices.data(), vbByteSize, mBoxGeo->VertexBufferUploader);
+//
+//    mBoxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+//        mCommandList.Get(), indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
+//
+//    mBoxGeo->VertexByteStride = sizeof(Vertex);
+//    mBoxGeo->VertexBufferByteSize = vbByteSize;
+//    mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
+//    mBoxGeo->IndexBufferByteSize = ibByteSize;
+//
+//    SubmeshGeometry submesh;
+//    submesh.IndexCount = (UINT)indices.size();
+//    submesh.StartIndexLocation = 0;
+//    submesh.BaseVertexLocation = 0;
+//
+//    mBoxGeo->DrawArgs["box"] = submesh;
+//
+//    CubePos = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
+//    XMVECTOR posVec = XMLoadFloat4(&CubePos); 
+//
+//    XMMATRIX tmpMat = XMMatrixTranslationFromVector(posVec); 
+//    XMStoreFloat4x4(&CubeRotMat, XMMatrixIdentity()); 
+//    XMStoreFloat4x4(&mWorld, tmpMat); 
+//
+//}
 
 void BoxApp::BuildPSO()
 {
