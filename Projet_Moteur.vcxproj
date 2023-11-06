@@ -139,6 +139,7 @@
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="GameTimer.cpp" />
     <ClCompile Include="MathHelper.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -151,6 +152,7 @@
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="UploadBuffer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

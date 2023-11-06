@@ -11,6 +11,7 @@
 #include "d3dApp.h"
 #include "MathHelper.h"
 #include "UploadBuffer.h"
+#include "Transform.h"
 #include "CreateGeometry.h"
 #include "GameObject.h"
 
@@ -172,6 +173,8 @@ void BoxApp::OnResize()
 
 void BoxApp::Update(const GameTimer& gt)
 {
+    Transform transform;
+    // Convert Spherical to Cartesian coordinates.
     float x = mRadius*sinf(mPhi)*cosf(mTheta);
     float z = mRadius*sinf(mPhi)*sinf(mTheta);
     float y = mRadius*cosf(mPhi);
@@ -188,6 +191,7 @@ void BoxApp::Update(const GameTimer& gt)
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
     XMMATRIX proj = XMLoadFloat4x4(&mProj);
+    XMMATRIX worldViewProj = world * view * proj;
 
     XMMATRIX viewProj = XMMatrixMultiply(view,proj);
 

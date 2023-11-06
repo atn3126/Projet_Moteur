@@ -42,13 +42,14 @@
     <ClCompile Include="CreateGeometry.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
       <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="CreateGeometry.h">
-      <Filter>Fichiers d%27en-tête</Filter>
+
     </ClInclude>
     <ClInclude Include="d3dApp.h">
       <Filter>Fichiers d%27en-tête</Filter>
@@ -76,6 +77,11 @@
     </ClInclude>
     <ClInclude Include="UploadBuffer.h">
       <Filter>Fichiers d%27en-tête</Filter>
+
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+
     </ClInclude>
   </ItemGroup>
 </Project>
