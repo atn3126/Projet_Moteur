@@ -191,7 +191,6 @@ void BoxApp::Update(const GameTimer& gt)
     XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
     XMMATRIX proj = XMLoadFloat4x4(&mProj);
-    XMMATRIX worldViewProj = world * view * proj;
 
     XMMATRIX viewProj = XMMatrixMultiply(view,proj);
 
