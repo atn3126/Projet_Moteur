@@ -33,7 +33,7 @@ void Transform::Identity()
 
 void Transform::RotateYaw(float angle)
 {
-	TRANSFORM mat;
+	TRANSFORM mat{};
 	mat.vDir.x = angle;
 	mat.vDir.y = 0;
 	mat.vDir.z = 0;
@@ -42,7 +42,7 @@ void Transform::RotateYaw(float angle)
 
 void Transform::RotatePitch(float angle)
 {
-	TRANSFORM mat;
+	TRANSFORM mat{};
 	mat.vRight.x = 0;
 	mat.vRight.y = angle;
 	mat.vRight.z = 0;
@@ -51,7 +51,7 @@ void Transform::RotatePitch(float angle)
 
 void Transform::RotateRoll(float angle)
 {
-	TRANSFORM mat;
+	TRANSFORM mat{};
 	mat.vUp.x = 0;
 	mat.vUp.y = 0;
 	mat.vUp.z = angle;
@@ -61,7 +61,7 @@ void Transform::RotateRoll(float angle)
 
 void Transform::UpdateRotationFromVectors()
 {
-	TRANSFORM mat;
+	TRANSFORM mat{};
 	mat.qRot.x = sqrt(1 + mat.vDir.x + mat.vRight.y + mat.vUp.z)/2;
 	mat.qRot.y = (mat.vUp.y - mat.vRight.z)/(4 * mat.qRot.x);
 	mat.qRot.z = (mat.vDir.z - mat.vUp.x) / (4 * mat.qRot.x);
@@ -70,7 +70,7 @@ void Transform::UpdateRotationFromVectors()
 
 void Transform::UpdateRotationFromQuaternion()
 {
-	TRANSFORM mat;
+	TRANSFORM mat{};
 	mat.mRot._11 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.y * mat.qRot.y) - 1;
 	mat.mRot._12 = 2 * (mat.qRot.y * mat.qRot.z - mat.qRot.x * mat.qRot.w);
 	mat.mRot._13 = 2 * (mat.qRot.y * mat.qRot.w + mat.qRot.x * mat.qRot.z);
@@ -86,7 +86,7 @@ void Transform::UpdateRotationFromQuaternion()
 
 void Transform::UpdateMatrix()
 {
-	TRANSFORM mat;
+	TRANSFORM mat{};
 	mat.mWorld = mat.mSca;
 	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mRot);
 	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mPos);
