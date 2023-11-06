@@ -58,6 +58,16 @@ void Transform::RotateRoll(float angle)
 	/*XMMatrixRotationZ(angle);*/
 }
 
+void Transform::Translate(float x, float y, float z)
+{
+	TRANSFORM mat{};
+	Identity();
+	mat.mPos._14 = x;
+	mat.mPos._24 = y;
+	mat.mPos._34 = z;
+	UpdateMatrix();
+}
+
 
 void Transform::UpdateRotationFromVectors()
 {
@@ -121,6 +131,9 @@ void Transform::Rotate(float yaw, float pitch, float roll)
 	UpdateRotationFromQuaternion();
 	UpdateMatrix();
 }
+
+
+
 
 /*==============================================*/
 
