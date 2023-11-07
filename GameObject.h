@@ -2,6 +2,7 @@
 #include "MathHelper.h"
 #include "UploadBuffer.h"
 #include "CreateGeometry.h"
+#include "Transform.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -18,7 +19,7 @@ struct Vertex
 	XMFLOAT4 Color;
 };
 
-struct RenderItem {
+struct RenderItem : Transform {
 	RenderItem() = default;
 	XMFLOAT4X4 World = MathHelper::Identity4x4();
 

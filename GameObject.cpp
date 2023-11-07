@@ -8,6 +8,7 @@ GameObject::GameObject()
 
 GameObject::~GameObject()
 {
+
 }
 
 void GameObject::Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12Device> device) {
@@ -77,7 +78,6 @@ void GameObject::Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12De
 
 void GameObject::BuildRenderOpBox(ComPtr<ID3D12Device> device) {
 	auto boxRitem = std::make_unique<RenderItem>();
-	XMStoreFloat4x4(&boxRitem->World, XMMatrixScaling(1.0f, 1.0f, 1.0f) * XMMatrixTranslation(0.0f, 0.5f, 0.0f));
 	boxRitem->ObjCBIndex = ObjIndex;
 	boxRitem->Geo = mGeometries["shapeGeo"].get();
 	boxRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -95,8 +95,6 @@ void GameObject::BuildRenderOpBox(ComPtr<ID3D12Device> device) {
 
 void GameObject::BuildRenderOpCircle(ComPtr<ID3D12Device> device) {
 	auto leftSphereRitem = std::make_unique<RenderItem>();
-	XMMATRIX leftSphereWorld = XMMatrixTranslation(1.f, 1.f, -1.0f);
-	XMStoreFloat4x4(&leftSphereRitem->World, leftSphereWorld);
 	leftSphereRitem->ObjCBIndex = ObjIndex;
 	leftSphereRitem->Geo = mGeometries["shapeGeo"].get();
 	leftSphereRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
