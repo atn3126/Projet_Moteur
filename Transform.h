@@ -11,8 +11,8 @@ class Transform
 {
 public :
 
-	void Rotate(float yaw, float pitch, float roll);
-	void Translate(float x, float y, float z);
+	XMMATRIX Rotate(float yaw, float pitch, float roll);
+	XMMATRIX Translate(float x, float y, float z);
 
 private :
 
@@ -20,7 +20,6 @@ private :
 	void Identity();
 	void UpdateRotationFromVectors();
 	void UpdateRotationFromQuaternion();
-	void UpdateMatrix();
 	void RotateYaw(float angle);
 	void RotatePitch(float angle);
 	void RotateRoll(float angle);
