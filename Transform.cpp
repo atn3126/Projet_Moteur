@@ -58,18 +58,6 @@ void Transform::RotateRoll(float angle)
 	/*XMMatrixRotationZ(angle);*/
 }
 
-XMMATRIX Transform::Translate(float x, float y, float z)
-{
-	TRANSFORM mat{};
-	Identity();
-	mat.mPos._14 = x;
-	mat.mPos._24 = y;
-	mat.mPos._34 = z;
-	UpdateMatrix();
-	XMMATRIX matrixWorld = XMLoadFloat4x4(&mat.mWorld);
-	return matrixWorld;
-}
-
 
 void Transform::UpdateRotationFromVectors()
 {
@@ -96,35 +84,16 @@ void Transform::UpdateRotationFromQuaternion()
 	mat.mRot._33 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.w * mat.qRot.w) - 1;
 }
 
-void Transform::UpdateMatrix()
-{
-	TRANSFORM mat{};
-	mat.mWorld = mat.mSca;
-	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mRot);
-	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mPos);
-}
+//void Transform::UpdateMatrix()
+//{
+//	TRANSFORM mat{};
+//	mat.mWorld = mat.mSca;
+//	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mRot);
+//	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mPos);
+//}
 
 XMMATRIX Transform::Rotate(float yaw, float pitch, float roll)
 {
-	/*XMMatrixRotationRollPitchYaw(yaw, pitch, roll);*/
-
-	/*
-	RotateYaw(float yaw);
-	RotatePitch(float pitch);
-	RotateRoll(float roll);
-
-	TRANSFORM mat;
-	mat.mRot._11 = mat.vDir.x;
-	mat.mRot._12 = mat.vDir.y;
-	mat.mRot._13 = mat.vDir.z;
-
-	mat.mRot._21 = mat.vRight.x;
-	mat.mRot._22 = mat.vRight.y;
-	mat.mRot._23 = mat.vRight.z;
-
-	mat.mRot._31 = mat.vUp.x;
-	mat.mRot._32 = mat.vUp.y;
-	mat.mRot._33 = mat.vUp.z;*/
 	TRANSFORM mat{};
 	Identity();
 	RotateYaw(yaw);
@@ -132,12 +101,20 @@ XMMATRIX Transform::Rotate(float yaw, float pitch, float roll)
 	RotateRoll(roll);
 	UpdateRotationFromVectors();
 	UpdateRotationFromQuaternion();
-	UpdateMatrix();
-	XMMATRIX matrixWorld = XMLoadFloat4x4(&mat.mWorld);
-	return matrixWorld;
+	XMMATRIX matRot = XMLoadFloat4x4(&mat.mRot);
+	return matRot;
 }
 
-
+XMMATRIX Transform::Translate(float x, float y, float z)
+{
+	TRANSFORM mat{};
+	Identity();
+	mat.mPos._14 = x;
+	mat.mPos._24 = y;
+	mat.mPos._34 = z;
+	XMMATRIX matPos = XMLoadFloat4x4(&mat.mPos);
+	return matPos;
+}
 
 
 /*==============================================*/

@@ -20,7 +20,6 @@ private :
 	void Identity();
 	void UpdateRotationFromVectors();
 	void UpdateRotationFromQuaternion();
-	void UpdateMatrix();
 	void RotateYaw(float angle);
 	void RotatePitch(float angle);
 	void RotateRoll(float angle);
