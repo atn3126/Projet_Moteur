@@ -15,10 +15,13 @@ void GameObject::Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12De
 	CreateGeometry geoGen;
 	CreateGeometry::MeshData box = geoGen.CreateBox(.5f, 0.5f, 1.5f, 3);
 	CreateGeometry::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
+	CreateGeometry::MeshData pyramide = geoGen.CreatePyramide(1.f,1.f,0.3f,3);
 	UINT boxVertexOffset = 0;
 	UINT boxIndexOffset = 0;
 	UINT sphereVertexOffset = (UINT)box.Vertices.size();
 	UINT sphereIndexOffset = (UINT)box.Indices32.size();
+	UINT pyramideVertexOffset = (UINT)box.Vertices.size() + (UINT)sphere.Vertices.size();
+	UINT pyramideIndexOffset = (UINT)box.Indices32.size() + (UINT)sphere.Indices32.size();
 
 
 	SubmeshGeometry boxSubmesh;
@@ -31,7 +34,12 @@ void GameObject::Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12De
 	sphereSubmesh.StartIndexLocation = sphereIndexOffset;
 	sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
 
-	auto totalVertexCount = box.Vertices.size() + sphere.Vertices.size();
+	SubmeshGeometry pyramideSubmesh;
+	pyramideSubmesh.IndexCount = (UINT)pyramide.Indices32.size();
+	pyramideSubmesh.StartIndexLocation = pyramideIndexOffset;
+	pyramideSubmesh.BaseVertexLocation = pyramideVertexOffset;
+
+	auto totalVertexCount = box.Vertices.size() + sphere.Vertices.size() + pyramide.Vertices.size();
 	std::vector<Vertex> vertices(totalVertexCount);
 	UINT k = 0;
 	for (size_t i = 0; i < box.Vertices.size(); ++i, ++k)
@@ -44,6 +52,10 @@ void GameObject::Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12De
 		vertices[k].Pos = sphere.Vertices[i].Position;
 		vertices[k].Color = XMFLOAT4(DirectX::Colors::Crimson);
 	}
+	for (size_t i = 0; i < pyramide.Vertices.size(); i++, k++) {
+		vertices[k].Pos = pyramide.Vertices[i].Position;
+		vertices[k].Color = XMFLOAT4(DirectX::Colors::Yellow);
+	}
 
 	std::vector<std::uint16_t> indices;
 	indices.insert(indices.end(),
@@ -52,6 +64,9 @@ void GameObject::Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12De
 	indices.insert(indices.end(),
 		std::begin(sphere.GetIndices16()),
 		std::end(sphere.GetIndices16()));
+	indices.insert(indices.end(),
+		std::begin(pyramide.GetIndices16()),
+		std::end(pyramide.GetIndices16()));
 
 	const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 	const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
@@ -73,6 +88,7 @@ void GameObject::Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12De
 	geo->IndexBufferByteSize = ibByteSize;
 	geo->DrawArgs["box"] = boxSubmesh;
 	geo->DrawArgs["sphere"] = sphereSubmesh;
+	geo->DrawArgs["pyramide"] = pyramideSubmesh;
 	mGeometries[geo->Name] = std::move(geo);
 }
 
@@ -88,6 +104,23 @@ void GameObject::BuildRenderOpBox(ComPtr<ID3D12Device> device) {
 	BuildObjectConstantBuffers(device, &boxRitem);
 
 	mAllRitems.push_back(std::move(boxRitem));
+	mOpaqueRitems.push_back(mAllRitems[ObjIndex].get());
+	ObjIndex++;
+
+}
+
+void GameObject::BuildRenderPyramideBox(ComPtr<ID3D12Device> device) {
+	auto pyramideRitem = std::make_unique<RenderItem>();
+	pyramideRitem->ObjCBIndex = ObjIndex;
+	pyramideRitem->Geo = mGeometries["shapeGeo"].get();
+	pyramideRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	pyramideRitem->IndexCount = pyramideRitem->Geo->DrawArgs["pyramide"].IndexCount;
+	pyramideRitem->StartIndexLocation = pyramideRitem->Geo->DrawArgs["pyramide"].StartIndexLocation;
+	pyramideRitem->BaseVertexLocation = pyramideRitem->Geo->DrawArgs["pyramide"].BaseVertexLocation;
+
+	BuildObjectConstantBuffers(device, &pyramideRitem);
+
+	mAllRitems.push_back(std::move(pyramideRitem));
 	mOpaqueRitems.push_back(mAllRitems[ObjIndex].get());
 	ObjIndex++;
 

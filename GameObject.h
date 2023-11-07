@@ -49,6 +49,7 @@ public:
 	~GameObject();
 	void Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12Device> device);
 	void BuildRenderOpBox(ComPtr<ID3D12Device> device);
+	void BuildRenderPyramideBox(ComPtr<ID3D12Device> device);
 	void BuildRenderOpCircle(ComPtr<ID3D12Device> device);
 	const std::vector<RenderItem*>& GetOpaqueItems();
 	std::vector<std::unique_ptr<RenderItem>>& GetAllItems();
