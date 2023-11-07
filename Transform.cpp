@@ -58,7 +58,7 @@ void Transform::RotateRoll(float angle)
 	/*XMMatrixRotationZ(angle);*/
 }
 
-void Transform::Translate(float x, float y, float z)
+XMMATRIX Transform::Translate(float x, float y, float z)
 {
 	TRANSFORM mat{};
 	Identity();
@@ -66,6 +66,8 @@ void Transform::Translate(float x, float y, float z)
 	mat.mPos._24 = y;
 	mat.mPos._34 = z;
 	UpdateMatrix();
+	XMMATRIX matrixWorld = XMLoadFloat4x4(&mat.mWorld);
+	return matrixWorld;
 }
 
 
@@ -102,7 +104,7 @@ void Transform::UpdateMatrix()
 	mat.mWorld = MultiplyFloat4X4(mat.mWorld, mat.mPos);
 }
 
-void Transform::Rotate(float yaw, float pitch, float roll)
+XMMATRIX Transform::Rotate(float yaw, float pitch, float roll)
 {
 	/*XMMatrixRotationRollPitchYaw(yaw, pitch, roll);*/
 
@@ -123,6 +125,7 @@ void Transform::Rotate(float yaw, float pitch, float roll)
 	mat.mRot._31 = mat.vUp.x;
 	mat.mRot._32 = mat.vUp.y;
 	mat.mRot._33 = mat.vUp.z;*/
+	TRANSFORM mat{};
 	Identity();
 	RotateYaw(yaw);
 	RotatePitch(pitch);
@@ -130,6 +133,8 @@ void Transform::Rotate(float yaw, float pitch, float roll)
 	UpdateRotationFromVectors();
 	UpdateRotationFromQuaternion();
 	UpdateMatrix();
+	XMMATRIX matrixWorld = XMLoadFloat4x4(&mat.mWorld);
+	return matrixWorld;
 }
 
 
