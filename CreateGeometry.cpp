@@ -79,6 +79,67 @@ CreateGeometry::MeshData CreateGeometry::CreateBox(float width, float height, fl
 	return meshData;
 }
 
+CreateGeometry::MeshData CreateGeometry::CreatePyramide(float width, float height, float depth, uint32 numSubdivisions)
+{
+	MeshData meshData;
+
+	Vertex v[16];
+
+	float w2 = 0.5f * width;
+	float h2 = 0.5f * height;
+	float d2 = 0.5f * depth;
+
+	//front
+	v[0] = Vertex(-w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[1] = Vertex(0, +h2, 0, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[2] = Vertex(+w2, -h2, -d2, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+
+	//back
+	v[3] = Vertex(-w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[4] = Vertex(+w2, -h2, +d2, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[5] = Vertex(0, +h2, 0, 0.0f, 0.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+
+	//pas touché
+	v[6] = Vertex(-w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f);
+	v[7] = Vertex(+w2, -h2, -d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f);
+	v[8] = Vertex(+w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+	v[9] = Vertex(-w2, -h2, +d2, 0.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f);
+
+	//gauche
+	v[10] = Vertex(-w2, -h2, +d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f);
+	v[11] = Vertex(0, +h2, 0, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f);
+	v[12] = Vertex(-w2, -h2, -d2, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f);
+
+	//droite
+	v[13] = Vertex(+w2, -h2, -d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f);
+	v[14] = Vertex(0, +h2, 0, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f);
+	v[15] = Vertex(+w2, -h2, +d2, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f);
+
+	meshData.Vertices.assign(&v[0], &v[16]);
+
+	uint32 i[18];
+
+	i[0] = 0; i[1] = 1; i[2] = 2;
+
+	i[3] = 3; i[4] = 4; i[5] = 5;
+
+	i[6] = 6; i[7] = 7; i[8] = 8;
+	i[9] = 6; i[10] = 8; i[11] = 9;
+
+	i[12] = 10; i[13] = 11; i[14] = 12;
+
+	i[15] = 13; i[16] = 14; i[17] = 15;
+
+	meshData.Indices32.assign(&i[0], &i[18]);
+
+	numSubdivisions = std::min<uint32>(numSubdivisions, 6u);
+
+	for (uint32 i = 0; i < numSubdivisions; ++i)
+		Subdivide(meshData);
+
+	return meshData;
+}
+
 CreateGeometry::MeshData CreateGeometry::CreateSphere(float radius, uint32 sliceCount, uint32 stackCount)
 {
 	MeshData meshData;
