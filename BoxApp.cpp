@@ -1,128 +1,4 @@
-//***************************************************************************************
-// BoxApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
-//
-// Shows how to draw a box in Direct3D 12.
-//
-// Controls:
-//   Hold the left mouse button down and move the mouse to rotate.
-//   Hold the right mouse button down and move the mouse to zoom in and out.
-//***************************************************************************************
-
-#include "d3dApp.h"
-#include "MathHelper.h"
-#include "UploadBuffer.h"
-#include "Transform.h"
-#include "CreateGeometry.h"
-#include "GameObject.h"
-#include "InputManager.h"
-
-using Microsoft::WRL::ComPtr;
-using namespace DirectX;
-using namespace DirectX::PackedVector;
-
-struct PassConstants {
-    XMFLOAT4X4 View;
-    XMFLOAT4X4 InvView;
-    XMFLOAT4X4 Proj;
-    XMFLOAT4X4 InvProj;
-    XMFLOAT4X4 ViewProj;
-    XMFLOAT4X4 InvViewProj;
-    XMFLOAT3 EyePosW;
-    float cbPerObjectPad1;
-    XMFLOAT2 RenderTargetSize;
-    XMFLOAT2 InvRenderTargetSize;
-    float NearZ;
-    float FarZ;
-    float TotalTime;
-    float DeltaTime;
-};
-
-class BoxApp : public D3DApp
-{
-public:
-	BoxApp(HINSTANCE hInstance);
-    BoxApp(const BoxApp& rhs) = delete;
-    BoxApp& operator=(const BoxApp& rhs) = delete;
-	~BoxApp();
-
-	virtual bool Initialize()override;
-
-private:
-    virtual void OnResize()override;
-    void CameraInputs(const GameTimer& gt);
-    void Camera(const GameTimer& gt);
-    virtual void Update(const GameTimer& gt)override;
-    void DrawRenderItems();
-    virtual void Draw(const GameTimer& gt)override;
-
-    virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
-    virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
-
-    void BuildDescriptorHeaps();
-	void BuildConstantBuffers();
-    void BuildRootSignature();
-    void BuildShadersAndInputLayout();
-    void BuildBoxGeometry();
-    void BuildPSO();
-
-private:
-    XMFLOAT4 CubePos;
-    XMFLOAT4X4 CubeRotMat;
-    ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-    ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
-
-    GameObject gameObject;
-    std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
-
-    //Constant Buffer
-    std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
-    std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
-
-    //Stock RenderItem
-
-    UINT mPassCbvOffset =0;
-	std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
-
-    ComPtr<ID3DBlob> mvsByteCode = nullptr;
-    ComPtr<ID3DBlob> mpsByteCode = nullptr;
-
-    std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
-
-    ComPtr<ID3D12PipelineState> mPSO = nullptr;
-
-    POINT mLastMousePos;
-
-    InputManager inputManager;
-    int keyPressed = -1;
-
-    XMVECTOR DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-    XMVECTOR DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-    XMVECTOR DefaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-    XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-    XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-    XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-    XMVECTOR camPosition = XMVectorSet(0.0f, 0.0f, -4.0f, 1.0f);
-
-    XMMATRIX camRotationMatrix;
-    XMMATRIX groundWorld;
-    XMMATRIX camView;
-
-    XMVECTOR getCam;
-
-    float moveLeftRight = 0.0f;
-    float moveBackForward = 0.0f;
-
-    XMVECTOR camTarget;
-
-    float camYaw = 0.0f;
-    float camPitch = 0.0f;
-
-    XMFLOAT4X4 mWorld = MathHelper::Identity4x4();
-    XMFLOAT4X4 mView = MathHelper::Identity4x4();
-    XMFLOAT4X4 mProj = MathHelper::Identity4x4();
-};
+#include "BoxApp.h"
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
 				   PSTR cmdLine, int showCmd)
@@ -365,11 +241,6 @@ void BoxApp::Draw(const GameTimer& gt)
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-
-    //int passCbvIndex = mPassCbvOffset;
-    //auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-    //    mCbvHeap->GetGPUDescriptorHandleForHeapStart());
-    //passCbvHandle.Offset(passCbvIndex, mCbvSrvUavDescriptorSize);
     mCommandList->SetGraphicsRootConstantBufferView(1, PassCB->Resource()->GetGPUVirtualAddress());
 
     DrawRenderItems();
@@ -393,19 +264,6 @@ void BoxApp::Draw(const GameTimer& gt)
 	// done for simplicity.  Later we will show how to organize our rendering code
 	// so we do not have to wait per frame.
 	FlushCommandQueue();
-}
-
-void BoxApp::OnMouseDown(WPARAM btnState, int x, int y)
-{
-    mLastMousePos.x = x;
-    mLastMousePos.y = y;
-
-    SetCapture(mhMainWnd);
-}
-
-void BoxApp::OnMouseUp(WPARAM btnState, int x, int y)
-{
-    ReleaseCapture();
 }
 
 void BoxApp::BuildDescriptorHeaps()
@@ -458,12 +316,6 @@ void BoxApp::BuildRootSignature()
 	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[2];
 
-	// Create a single descriptor table of CBVs.
-	//CD3DX12_DESCRIPTOR_RANGE cbvTable0;
-	//cbvTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
- //   CD3DX12_DESCRIPTOR_RANGE cbvTable1;
- //   cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
-
 	slotRootParameter[0].InitAsConstantBufferView(0);
     slotRootParameter[1].InitAsConstantBufferView(1);
 
@@ -503,86 +355,6 @@ void BoxApp::BuildShadersAndInputLayout()
         { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 }
-
-//void BoxApp::BuildBoxGeometry()
-//{
-//    std::array<Vertex, 8> vertices =
-//    {
-//        Vertex({ XMFLOAT3(-.5f, -.5f, -.5f), XMFLOAT4(Colors::White) }),
-//        Vertex({ XMFLOAT3(-.5f, +.5f, -.5f), XMFLOAT4(Colors::Black) }),
-//        Vertex({ XMFLOAT3(+.5f, +.5f, -.5f), XMFLOAT4(Colors::Red) }),
-//        Vertex({ XMFLOAT3(+.5f, -.5f, -.5f), XMFLOAT4(Colors::Green) }),
-//        Vertex({ XMFLOAT3(-.5f, -.5f, +.5f), XMFLOAT4(Colors::Blue) }),
-//        Vertex({ XMFLOAT3(-.5f, +.5f, +.5f), XMFLOAT4(Colors::Yellow) }),
-//        Vertex({ XMFLOAT3(+.5f, +.5f, +.5f), XMFLOAT4(Colors::Cyan) }),
-//        Vertex({ XMFLOAT3(+.5f, -.5f, +.5f), XMFLOAT4(Colors::Magenta) })
-//    };
-//
-//    std::array<std::uint16_t, 36> indices =
-//    {
-//        // front face
-//        1, 3, 0,
-//        2, 3, 1,
-//
-//        // back face
-//        6, 4, 7,
-//        5, 4, 6,
-//
-//        // left face
-//        5, 0, 4,
-//        1, 0, 5,
-//
-//        // right face
-//        3, 6, 7,
-//        2, 6, 3,
-//
-//        // top face
-//        1, 6, 2,
-//        5, 6, 1,
-//
-//        // bottom face
-//        7, 0, 3,
-//        4, 0, 7
-//    };
-//
-//    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-//    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
-//
-//    mBoxGeo = std::make_unique<MeshGeometry>();
-//    mBoxGeo->Name = "boxGeo";
-//
-//    ThrowIfFailed(D3DCreateBlob(vbByteSize, &mBoxGeo->VertexBufferCPU));
-//    CopyMemory(mBoxGeo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-//
-//    ThrowIfFailed(D3DCreateBlob(ibByteSize, &mBoxGeo->IndexBufferCPU));
-//    CopyMemory(mBoxGeo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-//
-//    mBoxGeo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-//        mCommandList.Get(), vertices.data(), vbByteSize, mBoxGeo->VertexBufferUploader);
-//
-//    mBoxGeo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
-//        mCommandList.Get(), indices.data(), ibByteSize, mBoxGeo->IndexBufferUploader);
-//
-//    mBoxGeo->VertexByteStride = sizeof(Vertex);
-//    mBoxGeo->VertexBufferByteSize = vbByteSize;
-//    mBoxGeo->IndexFormat = DXGI_FORMAT_R16_UINT;
-//    mBoxGeo->IndexBufferByteSize = ibByteSize;
-//
-//    SubmeshGeometry submesh;
-//    submesh.IndexCount = (UINT)indices.size();
-//    submesh.StartIndexLocation = 0;
-//    submesh.BaseVertexLocation = 0;
-//
-//    mBoxGeo->DrawArgs["box"] = submesh;
-//
-//    CubePos = XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-//    XMVECTOR posVec = XMLoadFloat4(&CubePos); 
-//
-//    XMMATRIX tmpMat = XMMatrixTranslationFromVector(posVec); 
-//    XMStoreFloat4x4(&CubeRotMat, XMMatrixIdentity()); 
-//    XMStoreFloat4x4(&mWorld, tmpMat); 
-//
-//}
 
 void BoxApp::BuildPSO()
 {

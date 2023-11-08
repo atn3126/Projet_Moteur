@@ -143,6 +143,7 @@
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BoxApp.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CreateGeometry.h" />
     <ClInclude Include="d3dApp.h" />
