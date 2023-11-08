@@ -76,22 +76,6 @@ void BoxApp::CameraInputs(const GameTimer& gt)
     float swift = 0.02f;
     int key = inputManager.GetKeyPressed();
 
-    if (key == 'Z')
-    {
-        moveBackForward += speed;
-    }
-    if (key == 'Q')
-    {
-        moveLeftRight -= speed;
-    }
-    if (key == 'D')
-    {
-        moveLeftRight += speed;
-    }
-    if (key == 'S')
-    {
-        moveBackForward -= speed;
-    }
     //RUN
     if (key == VK_SHIFT)
     {
