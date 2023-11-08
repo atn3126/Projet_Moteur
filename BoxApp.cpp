@@ -115,6 +115,40 @@ void BoxApp::CameraInputs(const GameTimer& gt)
     {
         camYaw += speed;
     }
+
+    /*===================================================================*/
+
+    // Jump logic
+    if (key == VK_SPACE && !isJumping)
+    {
+        isJumping = true;
+        jumpVelocity = 10.0f; // Ajuste la vitesse de saut selon tes besoins
+    }
+
+    if (isJumping)
+    {
+        jumpVelocity -= gravity * gt.DeltaTime();
+        jumpHeight += jumpVelocity * gt.DeltaTime();
+    }
+    else
+    {
+        // Assure-toi que la descente se fait à une vitesse plus rapide
+        jumpVelocity -= gravity * gt.DeltaTime() * 2.0f;
+        jumpHeight += jumpVelocity * gt.DeltaTime();
+    }
+
+    // Débogage
+    std::wstringstream debugStream;
+    debugStream << L"Jump Height: " << jumpHeight << std::endl;
+    OutputDebugString(debugStream.str().c_str());
+
+    // Arrête le saut si le sol est atteint
+    if (jumpHeight <= 0.01f)
+    {
+        jumpHeight = 0.0f;
+        jumpVelocity = 0.0f;
+        isJumping = false;
+    }
 }
 
 void BoxApp::Camera(const GameTimer& gt)
@@ -132,6 +166,14 @@ void BoxApp::Camera(const GameTimer& gt)
 
     camPosition += moveLeftRight * camRight;
     camPosition += moveBackForward * camForward;
+
+    /*===================================================================*/
+
+    // Ajoute la hauteur du saut à la position de la caméra
+    camPosition += jumpHeight * camUp;
+    jumpHeight = 0.0f; // Réinitialise la hauteur du saut après l'avoir utilisée
+
+    /*===================================================================*/
 
     moveLeftRight = 0.0f;
     moveBackForward = 0.0f;

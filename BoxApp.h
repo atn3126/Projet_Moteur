@@ -80,8 +80,16 @@ private:
 
     POINT mLastMousePos;
 
+    // Inputs
     InputManager inputManager;
 
+    // Jumps
+    float jumpHeight = 0.0f;
+    float jumpVelocity = 0.0f;
+    const float gravity = 9.8f;
+    bool isJumping = false;
+
+    // Camera
     XMVECTOR DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
     XMVECTOR DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
     XMVECTOR DefaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -109,4 +117,5 @@ private:
     XMFLOAT4X4 mWorld = MathHelper::Identity4x4();
     XMFLOAT4X4 mView = MathHelper::Identity4x4();
     XMFLOAT4X4 mProj = MathHelper::Identity4x4();
+
 };
