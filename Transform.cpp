@@ -4,29 +4,13 @@
 qy,β=cosβ2+(sinβ2)j
 qz,γ=cosγ2+(sinγ2)k*/
 
-struct TRANSFORM
+
+
+void Transform::Identity(TRANSFORM* mat)
 {
-	XMFLOAT3 vSca;
-	XMFLOAT4X4 mSca;
-
-	XMFLOAT3 vDir;
-	XMFLOAT3 vRight;
-	XMFLOAT3 vUp;
-	XMFLOAT4 qRot;
-	XMFLOAT4X4 mRot;
-
-	XMFLOAT3 vPos;
-	XMFLOAT4X4 mPos;
-
-	XMFLOAT4X4 mWorld;
-};
-
-void Transform::Identity()
-{
-	TRANSFORM id;
-	id.mSca = MathHelper::Identity4x4();
-	id.mRot = MathHelper::Identity4x4();
-	id.mPos = MathHelper::Identity4x4();
+	mat->mSca = MathHelper::Identity4x4();
+	mat->mRot = MathHelper::Identity4x4();
+	mat->mPos = MathHelper::Identity4x4();
 }
 
 
@@ -95,7 +79,7 @@ void Transform::UpdateRotationFromQuaternion()
 XMMATRIX Transform::Rotate(float yaw, float pitch, float roll)
 {
 	TRANSFORM mat{};
-	Identity();
+	Identity(&mat);
 	RotateYaw(yaw);
 	RotatePitch(pitch);
 	RotateRoll(roll);
@@ -108,10 +92,10 @@ XMMATRIX Transform::Rotate(float yaw, float pitch, float roll)
 XMMATRIX Transform::Translate(float x, float y, float z)
 {
 	TRANSFORM mat{};
-	Identity();
-	mat.mPos._14 = x;
-	mat.mPos._24 = y;
-	mat.mPos._34 = z;
+	Identity(&mat);
+	mat.mPos._11 = x;
+	mat.mPos._22 = y;
+	mat.mPos._33 = z;
 	XMMATRIX matPos = XMLoadFloat4x4(&mat.mPos);
 	return matPos;
 }

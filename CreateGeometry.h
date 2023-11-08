@@ -59,7 +59,7 @@ public:
 	};
 
 	MeshData								CreateBox(float width, float height, float depth, uint32 numSubdivisions);
-	CreateGeometry::MeshData CreatePyramide(float width, float height, float depth, uint32 numSubdivisions);
+	MeshData								CreatePyramide(float width, float height, float depth, uint32 numSubdivisions);
 	MeshData								CreateSphere(float radius, uint32 numSubdivisions, uint32 stackCount);
 	MeshData								CreateCylinder(float bottomRadius, float topRadius, float height, uint32 sliceCount, uint32 stackCount);
 	MeshData								CreateGrid(float width, float depth, uint32 m, uint32 n);

@@ -7,6 +7,23 @@ using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 
+struct TRANSFORM
+{
+	XMFLOAT3 vSca;
+	XMFLOAT4X4 mSca;
+
+	XMFLOAT3 vDir;
+	XMFLOAT3 vRight;
+	XMFLOAT3 vUp;
+	XMFLOAT4 qRot;
+	XMFLOAT4X4 mRot;
+
+	XMFLOAT3 vPos;
+	XMFLOAT4X4 mPos;
+
+	XMFLOAT4X4 mWorld;
+};
+
 class Transform
 {
 public :
@@ -17,7 +34,7 @@ public :
 private :
 
 
-	void Identity();
+	void Identity(TRANSFORM* mat);
 	void UpdateRotationFromVectors();
 	void UpdateRotationFromQuaternion();
 	void RotateYaw(float angle);
