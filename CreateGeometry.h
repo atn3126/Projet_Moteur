@@ -1,7 +1,5 @@
 #pragma once
-#include <cstdint>
-#include <DirectXMath.h>
-#include <vector>
+#include "framework.h"
 
 class CreateGeometry
 {

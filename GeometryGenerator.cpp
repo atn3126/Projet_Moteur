@@ -1,5 +1,5 @@
 #include "GeometryGenerator.h"
-#include "d3dApp.h"
+#include "DataD3D12.h"
 #include "MathHelper.h"
 #include "UploadBuffer.h"
 

@@ -129,31 +129,44 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BoxApp.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CreateGeometry.cpp" />
+    <ClCompile Include="DataD3D12.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
-    <ClCompile Include="d3dApp.cpp" />
     <ClCompile Include="d3dUtil.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="GameTimer.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="MathHelper.cpp" />
+    <ClCompile Include="RenderWindow.cpp" />
     <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CreateGeometry.h" />
-    <ClInclude Include="d3dApp.h" />
     <ClInclude Include="d3dUtil.h" />
     <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="DataD3D12.h" />
     <ClInclude Include="DDSTextureLoader.h" />
+    <ClInclude Include="framework.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="GameTimer.h" />
     <ClInclude Include="GeometryGenerator.h" />
     <ClInclude Include="MathHelper.h" />
+    <ClInclude Include="RenderWindow.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="ShaderStructures.h" />
+    <ClInclude Include="targetver.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="UploadBuffer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="projet projet.ico" />
+    <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="projet projet.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
