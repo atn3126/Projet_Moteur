@@ -14,11 +14,11 @@
 #include "Transform.h"
 #include "CreateGeometry.h"
 #include "GameObject.h"
+#include "InputManager.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
-
 
 struct PassConstants {
     XMFLOAT4X4 View;
@@ -49,14 +49,14 @@ public:
 
 private:
     virtual void OnResize()override;
+    void CameraInputs(const GameTimer& gt);
+    void Camera(const GameTimer& gt);
     virtual void Update(const GameTimer& gt)override;
     void DrawRenderItems();
     virtual void Draw(const GameTimer& gt)override;
 
-
     virtual void OnMouseDown(WPARAM btnState, int x, int y)override;
     virtual void OnMouseUp(WPARAM btnState, int x, int y)override;
-    virtual void OnMouseMove(WPARAM btnState, int x, int y)override;
 
     void BuildDescriptorHeaps();
 	void BuildConstantBuffers();
@@ -90,15 +90,38 @@ private:
 
     ComPtr<ID3D12PipelineState> mPSO = nullptr;
 
+    POINT mLastMousePos;
+
+    InputManager inputManager;
+    int keyPressed = -1;
+
+    XMVECTOR DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+    XMVECTOR DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+    XMVECTOR DefaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+    XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+    XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+    XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+    XMVECTOR camPosition = XMVectorSet(0.0f, 0.0f, -4.0f, 1.0f);
+
+    XMMATRIX camRotationMatrix;
+    XMMATRIX groundWorld;
+    XMMATRIX camView;
+
+    XMVECTOR getCam;
+
+    float moveLeftRight = 0.0f;
+    float moveBackForward = 0.0f;
+
+    XMVECTOR camTarget;
+
+    float camYaw = 0.0f;
+    float camPitch = 0.0f;
+
     XMFLOAT4X4 mWorld = MathHelper::Identity4x4();
     XMFLOAT4X4 mView = MathHelper::Identity4x4();
     XMFLOAT4X4 mProj = MathHelper::Identity4x4();
-
-    float mTheta = 1.5f*XM_PI;
-    float mPhi = XM_PIDIV4;
-    float mRadius = 5.0f;
-
-    POINT mLastMousePos;
 };
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
@@ -171,35 +194,110 @@ void BoxApp::OnResize()
     XMStoreFloat4x4(&mProj, P);
 }
 
-void BoxApp::Update(const GameTimer& gt)
+void BoxApp::CameraInputs(const GameTimer& gt)
 {
-    Transform transform;
-    // Convert Spherical to Cartesian coordinates.
-    float x = mRadius*sinf(mPhi)*cosf(mTheta);
-    float z = mRadius*sinf(mPhi)*sinf(mTheta);
-    float y = mRadius*cosf(mPhi);
+    float speed = 0.04f;
+    float swift = 0.02f;
+    int key = inputManager.GetKeyPressed();
+
+    if (key == 'Z')
+    {
+        moveBackForward += speed;
+    }
+    if (key == 'Q')
+    {
+        moveLeftRight -= speed;
+    }
+    if (key == 'D')
+    {
+        moveLeftRight += speed;
+    }
+    if (key == 'S')
+    {
+        moveBackForward -= speed;
+    }
+    //RUN
+    if (key == VK_SHIFT)
+    {
+        swift = 0.06f;
+    }
+    //Walk
+    if (key == 'Z')
+    {
+        moveBackForward += swift;
+    }
+    if (key == 'Q')
+    {
+        moveLeftRight -= swift;
+    }
+    if (key == 'D')
+    {
+        moveLeftRight += swift;
+    }
+    if (key == 'S')
+    {
+        moveBackForward -= swift;
+    }
+    //ROTATE
+    if (key == VK_UP)
+    {
+        camPitch -= speed;
+    }
+    if (key == VK_DOWN)
+    {
+        camPitch += speed;
+    }
+    if (key == VK_LEFT)
+    {
+        camYaw -= speed;
+    }
+    if (key == VK_RIGHT)
+    {
+        camYaw += speed;
+    }
+}
+
+void BoxApp::Camera(const GameTimer& gt)
+{
+    camRotationMatrix = XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0);
+    camTarget = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
+    camTarget = XMVector3Normalize(camTarget);
+
+    XMMATRIX RotateYTempMatrix;
+    RotateYTempMatrix = XMMatrixRotationY(camYaw);
+
+    camRight = XMVector3TransformCoord(DefaultRight, RotateYTempMatrix);
+    camUp = XMVector3TransformCoord(camUp, RotateYTempMatrix);
+    camForward = XMVector3TransformCoord(DefaultForward, RotateYTempMatrix);
+
+    camPosition += moveLeftRight * camRight;
+    camPosition += moveBackForward * camForward;
+
+    moveLeftRight = 0.0f;
+    moveBackForward = 0.0f;
+
+    XMMATRIX world = XMLoadFloat4x4(&mWorld);
+    XMMATRIX proj = XMLoadFloat4x4(&mProj);
+
+    camTarget = camPosition + camTarget;
+    camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
+
     for (auto& e : gameObject.GetAllItems()) {
         XMMATRIX world = XMLoadFloat4x4(&e->World);
-
+        XMMATRIX worldViewProj = world;
         ObjectConstants objConstants;
-        XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+        XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
         e->mObjectCB->CopyData(0, objConstants);
     }
 
-    XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
-    XMVECTOR target = XMVectorZero();
-    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-    XMMATRIX proj = XMLoadFloat4x4(&mProj);
+    XMMATRIX viewProj = XMMatrixMultiply(camView, proj);
 
-    XMMATRIX viewProj = XMMatrixMultiply(view,proj);
-
-    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view),view);
+    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(camView), camView);
     XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
     XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
 
     PassConstants mMainPassCB;
-    XMStoreFloat4x4(&mMainPassCB.View, XMMatrixTranspose(view));
+    XMStoreFloat4x4(&mMainPassCB.View, XMMatrixTranspose(camView));
     XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
     XMStoreFloat4x4(&mMainPassCB.Proj, XMMatrixTranspose(proj));
     XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
@@ -211,7 +309,14 @@ void BoxApp::Update(const GameTimer& gt)
     mMainPassCB.FarZ = 1000.0f;
     mMainPassCB.TotalTime = gt.TotalTime();
     mMainPassCB.DeltaTime = gt.DeltaTime();
+   
     PassCB->CopyData(0, mMainPassCB);
+}
+
+void BoxApp::Update(const GameTimer& gt)
+{
+    CameraInputs(gt);
+    Camera(gt);
 }
 
 void BoxApp::DrawRenderItems() {
@@ -223,10 +328,6 @@ void BoxApp::DrawRenderItems() {
         mCommandList->IASetVertexBuffers(0,1,&ri->Geo->VertexBufferView());
         mCommandList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
         mCommandList->IASetPrimitiveTopology(ri->PrimitiveType);
-
-        //UINT cbvIndex = (UINT)gameObject.GetOpaqueItems().size() + ri->ObjCBIndex;
-        //auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-        //    mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 
         mCommandList->SetGraphicsRootConstantBufferView(0, ri->mObjectCB->Resource()->GetGPUVirtualAddress());
         mCommandList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
@@ -305,38 +406,6 @@ void BoxApp::OnMouseDown(WPARAM btnState, int x, int y)
 void BoxApp::OnMouseUp(WPARAM btnState, int x, int y)
 {
     ReleaseCapture();
-}
-
-void BoxApp::OnMouseMove(WPARAM btnState, int x, int y)
-{
-    if((btnState & MK_LBUTTON) != 0)
-    {
-        // Make each pixel correspond to a quarter of a degree.
-        float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
-        float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
-
-        // Update angles based on input to orbit camera around box.
-        mTheta += dx;
-        mPhi += dy;
-
-        // Restrict the angle mPhi.
-        mPhi = MathHelper::Clamp(mPhi, 0.1f, MathHelper::Pi - 0.1f);
-    }
-    else if((btnState & MK_RBUTTON) != 0)
-    {
-        // Make each pixel correspond to 0.005 unit in the scene.
-        float dx = 0.005f*static_cast<float>(x - mLastMousePos.x);
-        float dy = 0.005f*static_cast<float>(y - mLastMousePos.y);
-
-        // Update the camera radius based on input.
-        mRadius += dx - dy;
-
-        // Restrict the radius.
-        mRadius = MathHelper::Clamp(mRadius, 3.0f, 15.0f);
-    }
-
-    mLastMousePos.x = x;
-    mLastMousePos.y = y;
 }
 
 void BoxApp::BuildDescriptorHeaps()
