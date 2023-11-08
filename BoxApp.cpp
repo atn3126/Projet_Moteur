@@ -146,6 +146,7 @@ bool BoxApp::Initialize()
     gameObject.Init(mCommandList,md3dDevice);
     gameObject.BuildRenderOpBox(md3dDevice);
     gameObject.BuildRenderOpCircle(md3dDevice);
+    gameObject.BuildRenderOpProjectile(md3dDevice);
 
     BuildDescriptorHeaps();
     BuildConstantBuffers();
@@ -214,6 +215,10 @@ void BoxApp::Update(const GameTimer& gt)
     mMainPassCB.TotalTime = gt.TotalTime();
     mMainPassCB.DeltaTime = gt.DeltaTime();
     PassCB->CopyData(0, mMainPassCB);
+    for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
+    {
+        gameObject.SetOpaqueItems(gameObject.GetOpaqueItems()[i]->CheckCollision(gameObject.GetOpaqueItems(), i));
+    }
 }
 
 void BoxApp::DrawRenderItems() {

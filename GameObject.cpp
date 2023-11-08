@@ -113,6 +113,7 @@ void GameObject::BuildRenderOpBox(ComPtr<ID3D12Device> device) {
 	auto boxRitem = std::make_unique<RenderItem>();
 	boxRitem->ObjCBIndex = ObjIndex;
 	boxRitem->Geo = mGeometries["shapeGeo"].get();
+	boxRitem->Type = "testBox";
 	boxRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
 	boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
@@ -126,10 +127,11 @@ void GameObject::BuildRenderOpBox(ComPtr<ID3D12Device> device) {
 
 }
 
-void GameObject::BuildRenderOpPyramideBox(ComPtr<ID3D12Device> device) {
+void GameObject::BuildRenderOpPyramide(ComPtr<ID3D12Device> device) {
 	auto pyramideRitem = std::make_unique<RenderItem>();
 	pyramideRitem->ObjCBIndex = ObjIndex;
 	pyramideRitem->Geo = mGeometries["shapeGeo"].get();
+	pyramideRitem->Type = "player";
 	pyramideRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	pyramideRitem->IndexCount = pyramideRitem->Geo->DrawArgs["pyramide"].IndexCount;
 	pyramideRitem->StartIndexLocation = pyramideRitem->Geo->DrawArgs["pyramide"].StartIndexLocation;
@@ -143,10 +145,11 @@ void GameObject::BuildRenderOpPyramideBox(ComPtr<ID3D12Device> device) {
 
 }
 
-void GameObject::BuildRenderOpProjectileBox(ComPtr<ID3D12Device> device) {
+void GameObject::BuildRenderOpProjectile(ComPtr<ID3D12Device> device) {
 	auto projectileRitem = std::make_unique<RenderItem>();
 	projectileRitem->ObjCBIndex = ObjIndex;
 	projectileRitem->Geo = mGeometries["shapeGeo"].get();
+	projectileRitem->Type = "projectile";
 	projectileRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	projectileRitem->IndexCount = projectileRitem->Geo->DrawArgs["projectile"].IndexCount;
 	projectileRitem->StartIndexLocation = projectileRitem->Geo->DrawArgs["projectile"].StartIndexLocation;
@@ -164,12 +167,13 @@ void GameObject::BuildRenderOpCircle(ComPtr<ID3D12Device> device) {
 	auto leftSphereRitem = std::make_unique<RenderItem>();
 	leftSphereRitem->ObjCBIndex = ObjIndex;
 	leftSphereRitem->Geo = mGeometries["shapeGeo"].get();
+	leftSphereRitem->Type = "asteroid";
 	leftSphereRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	leftSphereRitem->IndexCount = leftSphereRitem->Geo->DrawArgs["sphere"].IndexCount;
 	leftSphereRitem->StartIndexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
 	leftSphereRitem->BaseVertexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
 	XMMATRIX temp = XMLoadFloat4x4(&leftSphereRitem->World);
-	XMStoreFloat4x4(&leftSphereRitem->World,XMMatrixMultiply(temp, leftSphereRitem->Translate(1, 1, 1)));
+	XMStoreFloat4x4(&leftSphereRitem->World,XMMatrixMultiply(temp, leftSphereRitem->Translate(0, 0, 0)));
 	BuildObjectConstantBuffers(device, &leftSphereRitem);
 
 	mAllRitems.push_back(std::move(leftSphereRitem));
@@ -186,6 +190,11 @@ const std::vector<RenderItem*>& GameObject::GetOpaqueItems()
 std::vector<std::unique_ptr<RenderItem>>& GameObject::GetAllItems()
 {
 	return mAllRitems;
+}
+
+void GameObject::SetOpaqueItems(std::vector<RenderItem*> OpaqueItems)
+{
+	mOpaqueRitems = OpaqueItems;
 }
 
 void GameObject::BuildObjectConstantBuffers(ComPtr<ID3D12Device> device, std::unique_ptr<RenderItem>* object)
