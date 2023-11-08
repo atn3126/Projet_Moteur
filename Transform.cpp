@@ -80,12 +80,13 @@ XMMATRIX Transform::Rotate(float yaw, float pitch, float roll)
 {
 	TRANSFORM mat{};
 	Identity(&mat);
-	RotateYaw(yaw);
+	/*RotateYaw(yaw);
 	RotatePitch(pitch);
 	RotateRoll(roll);
 	UpdateRotationFromVectors();
-	UpdateRotationFromQuaternion();
+	UpdateRotationFromQuaternion();*/
 	XMMATRIX matRot = XMLoadFloat4x4(&mat.mRot);
+	matRot = XMMatrixRotationRollPitchYaw(yaw, pitch, roll);
 	return matRot;
 }
 
@@ -93,10 +94,8 @@ XMMATRIX Transform::Translate(float x, float y, float z)
 {
 	TRANSFORM mat{};
 	Identity(&mat);
-	mat.mPos._11 = x;
-	mat.mPos._22 = y;
-	mat.mPos._33 = z;
 	XMMATRIX matPos = XMLoadFloat4x4(&mat.mPos);
+	matPos = XMMatrixTranslation(x, y, z);
 	return matPos;
 }
 
