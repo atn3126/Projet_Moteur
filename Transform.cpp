@@ -4,68 +4,15 @@
 qy,β=cosβ2+(sinβ2)j
 qz,γ=cosγ2+(sinγ2)k*/
 
+/*matPos = XMMatrixTranslation(x, y, z);*/
 
+//matRot = XMMatrixRotationRollPitchYaw(yaw, pitch, roll);
 
 void Transform::Identity(TRANSFORM* mat)
 {
 	mat->mSca = MathHelper::Identity4x4();
 	mat->mRot = MathHelper::Identity4x4();
 	mat->mPos = MathHelper::Identity4x4();
-}
-
-
-
-void Transform::RotateYaw(float angle)
-{
-	TRANSFORM mat{};
-	mat.vDir.x = angle;
-	mat.vDir.y = 0;
-	mat.vDir.z = 0;
-	/*XMMatrixRotationX(angle);*/
-}
-
-void Transform::RotatePitch(float angle)
-{
-	TRANSFORM mat{};
-	mat.vRight.x = 0;
-	mat.vRight.y = angle;
-	mat.vRight.z = 0;
-	/*XMMatrixRotationY(angle);*/
-}
-
-void Transform::RotateRoll(float angle)
-{
-	TRANSFORM mat{};
-	mat.vUp.x = 0;
-	mat.vUp.y = 0;
-	mat.vUp.z = angle;
-	/*XMMatrixRotationZ(angle);*/
-}
-
-
-void Transform::UpdateRotationFromVectors()
-{
-	TRANSFORM mat{};
-	mat.qRot.x = sqrt(1 + mat.vDir.x + mat.vRight.y + mat.vUp.z)/2;
-	mat.qRot.y = (mat.vUp.y - mat.vRight.z)/(4 * mat.qRot.x);
-	mat.qRot.z = (mat.vDir.z - mat.vUp.x) / (4 * mat.qRot.x);
-	mat.qRot.w = (mat.vRight.x - mat.vDir.y) / (4 * mat.qRot.x);
-}
-
-void Transform::UpdateRotationFromQuaternion()
-{
-	TRANSFORM mat{};
-	mat.mRot._11 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.y * mat.qRot.y) - 1;
-	mat.mRot._12 = 2 * (mat.qRot.y * mat.qRot.z - mat.qRot.x * mat.qRot.w);
-	mat.mRot._13 = 2 * (mat.qRot.y * mat.qRot.w + mat.qRot.x * mat.qRot.z);
-
-	mat.mRot._21 = 2 * (mat.qRot.y * mat.qRot.z + mat.qRot.x * mat.qRot.w);
-	mat.mRot._22 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.z * mat.qRot.z) - 1;
-	mat.mRot._23 = 2 * (mat.qRot.z * mat.qRot.w - mat.qRot.x * mat.qRot.y);
-
-	mat.mRot._31 = 2 * (mat.qRot.y * mat.qRot.w - mat.qRot.x * mat.qRot.z);
-	mat.mRot._32 = 2 * (mat.qRot.z * mat.qRot.w + mat.qRot.x * mat.qRot.y);
-	mat.mRot._33 = 2 * (mat.qRot.x * mat.qRot.x + mat.qRot.w * mat.qRot.w) - 1;
 }
 
 //void Transform::UpdateMatrix()
@@ -80,13 +27,29 @@ XMMATRIX Transform::Rotate(float yaw, float pitch, float roll)
 {
 	TRANSFORM mat{};
 	Identity(&mat);
-	/*RotateYaw(yaw);
-	RotatePitch(pitch);
-	RotateRoll(roll);
-	UpdateRotationFromVectors();
-	UpdateRotationFromQuaternion();*/
+
+	float cosPitch = cosf(pitch);
+	float sinPitch = sinf(pitch);
+
+	float cosYaw = cosf(yaw);
+	float sinYaw = sinf(yaw);
+
+	float cosRaw = cosf(roll);
+	float sinRaw = sinf(roll);
+
+	mat.mRot._11 = cosRaw * cosYaw + sinRaw * sinPitch * sinYaw;
+	mat.mRot._12 = sinRaw * cosPitch;
+	mat.mRot._13 = sinRaw * sinPitch * cosYaw - cosRaw * sinYaw;
+
+	mat.mRot._21 = cosRaw * sinPitch * sinYaw - sinRaw * cosYaw;
+	mat.mRot._22 = cosRaw * cosPitch;
+	mat.mRot._23 = sinRaw * sinYaw + cosRaw * sinPitch * cosYaw;
+
+	mat.mRot._31 = cosPitch * sinYaw;
+	mat.mRot._32 = -sinPitch;
+	mat.mRot._33 = cosPitch * cosYaw;
+
 	XMMATRIX matRot = XMLoadFloat4x4(&mat.mRot);
-	matRot = XMMatrixRotationRollPitchYaw(yaw, pitch, roll);
 	return matRot;
 }
 
@@ -94,8 +57,10 @@ XMMATRIX Transform::Translate(float x, float y, float z)
 {
 	TRANSFORM mat{};
 	Identity(&mat);
+	mat.mPos._41 = x;
+	mat.mPos._42 = y;
+	mat.mPos._43 = z;
 	XMMATRIX matPos = XMLoadFloat4x4(&mat.mPos);
-	matPos = XMMatrixTranslation(x, y, z);
 	return matPos;
 }
 
