@@ -63,6 +63,8 @@ private:
     GameObject gameObject;
     std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
     bool movePlayer = false;
+    bool moveUpPlayer = false;
+    bool moveDownPlayer = false;
     bool rotatePlayer = false;
     //Constant Buffer
     std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
