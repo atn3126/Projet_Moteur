@@ -148,19 +148,20 @@ void GameObject::BuildRenderOpPyramide() {
 
 }
 
-void GameObject::BuildRenderOpProjectile(XMFLOAT4X4 playerPos) {
+void GameObject::BuildRenderOpProjectile(float playerPosX,float playerPosY,float playerPosZ) {
 	auto projectileRitem = std::make_unique<RenderItem>();
 	projectileRitem->ObjCBIndex = ObjIndex;
-	projectileRitem->World = playerPos;
+
 	projectileRitem->Geo = mGeometries["shapeGeo"].get();
 	projectileRitem->Type = "projectile";
 	projectileRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	projectileRitem->IndexCount = projectileRitem->Geo->DrawArgs["projectile"].IndexCount;
 	projectileRitem->StartIndexLocation = projectileRitem->Geo->DrawArgs["projectile"].StartIndexLocation;
 	projectileRitem->BaseVertexLocation = projectileRitem->Geo->DrawArgs["projectile"].BaseVertexLocation;
-	XMMATRIX temp = XMLoadFloat4x4(&projectileRitem->World);
-	XMStoreFloat4x4(&projectileRitem->World, XMMatrixMultiply(temp, projectileRitem->Rotate(0, 90, 0)));
-
+	XMStoreFloat4x4(&projectileRitem->World, XMMatrixMultiply(XMLoadFloat4x4(&projectileRitem->World), projectileRitem->Rotate(0, 90, 0)));
+	projectileRitem->World._41 = playerPosX;
+	projectileRitem->World._42 = playerPosY;
+	projectileRitem->World._43 = playerPosZ;
 	BuildObjectConstantBuffers(&projectileRitem);
 
 	mAllRitems.push_back(std::move(projectileRitem));
@@ -179,7 +180,7 @@ void GameObject::BuildRenderOpCircle() {
 	leftSphereRitem->StartIndexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
 	leftSphereRitem->BaseVertexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
 	XMMATRIX temp = XMLoadFloat4x4(&leftSphereRitem->World);
-	XMStoreFloat4x4(&leftSphereRitem->World,XMMatrixMultiply(temp, leftSphereRitem->Translate(0, 0, 0)));
+	XMStoreFloat4x4(&leftSphereRitem->World,XMMatrixMultiply(temp, leftSphereRitem->Translate(0, 0, -2)));
 	BuildObjectConstantBuffers(&leftSphereRitem);
 
 	mAllRitems.push_back(std::move(leftSphereRitem));

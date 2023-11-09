@@ -45,7 +45,7 @@ bool BoxApp::Initialize()
     gameObject.Init(mCommandList,md3dDevice);
     gameObject.BuildRenderOpPyramide();
 
-    //gameObject.BuildRenderOpCircle();
+    gameObject.BuildRenderOpCircle();
 
     BuildDescriptorHeaps();
     BuildConstantBuffers();
@@ -107,29 +107,29 @@ void BoxApp::CameraInputs(const GameTimer& gt)
 
     }
     //ROTATE
-    if (key == VK_UP)
-    {
-        camPitch -= speed;
-        rotatePlayer = true;
-    }
-    if (key == VK_DOWN)
-    {
-        camPitch += speed;
-        rotatePlayer = true;
+    //if (key == VK_UP)
+    //{
+    //    camPitch -= speed;
+    //    rotatePlayer = true;
+    //}
+    //if (key == VK_DOWN)
+    //{
+    //    camPitch += speed;
+    //    rotatePlayer = true;
 
-    }
-    if (key == VK_LEFT)
-    {
-        camYaw -= speed;
-        rotatePlayer = true;
+    //}
+    //if (key == VK_LEFT)
+    //{
+    //    camYaw -= speed;
+    //    rotatePlayer = true;
 
-    }
-    if (key == VK_RIGHT)
-    {
-        camYaw += speed;
-        rotatePlayer = true;
+    //}
+    //if (key == VK_RIGHT)
+    //{
+    //    camYaw += speed;
+    //    rotatePlayer = true;
 
-    }
+    //}
 }
 
 void BoxApp::Camera(const GameTimer& gt)
@@ -150,12 +150,15 @@ void BoxApp::Camera(const GameTimer& gt)
 
     for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
     {
-        if (gameObject.GetOpaqueItems()[i]->Type == "player" && movePlayer || gameObject.GetOpaqueItems()[i]->Type == "player" && rotatePlayer) {
-            //gameObject.GetOpaqueItems()[i]->World._11 *= moveLeftRight;
-            //gameObject.GetOpaqueItems()[i]->World._33 *= moveBackForward;
-           XMStoreFloat4x4(&gameObject.GetOpaqueItems()[i]->World, XMMatrixMultiply(XMLoadFloat4x4(&gameObject.GetOpaqueItems()[i]->World), camRotationMatrix));
+        if (gameObject.GetOpaqueItems()[i]->Type == "player" && movePlayer ) {
+           gameObject.GetOpaqueItems()[i]->World._41 += moveLeftRight;
+           gameObject.GetOpaqueItems()[i]->World._43 += moveBackForward;
            movePlayer = false;
-           rotatePlayer = false;
+        }
+        if (gameObject.GetOpaqueItems()[i]->Type == "player" && rotatePlayer)
+        {
+            XMStoreFloat4x4(&gameObject.GetOpaqueItems()[i]->World, XMMatrixMultiply(XMLoadFloat4x4(&gameObject.GetOpaqueItems()[i]->World), camRotationMatrix));
+            rotatePlayer = false;
         }
     }
 
@@ -213,7 +216,7 @@ void BoxApp::CheckShoot(const GameTimer& gt) {
         {
             if (gameObject.GetOpaqueItems()[i]->Type == "player")
             {
-                gameObject.BuildRenderOpProjectile(gameObject.GetAllItems()[i]->World);
+                gameObject.BuildRenderOpProjectile(gameObject.GetOpaqueItems()[i]->World._41, gameObject.GetOpaqueItems()[i]->World._42, gameObject.GetOpaqueItems()[i]->World._43);
                 
             }
         }

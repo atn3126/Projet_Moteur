@@ -40,14 +40,14 @@ struct RenderItem : Transform {
 			XMMATRIX temp = XMLoadFloat4x4(&World);
 			translation = XMMatrixMultiply(temp, Translate(0, 0, -0.01));
 		}
-		else if (Type == "projectile") {
+		if (Type == "projectile") {
 			XMMATRIX temp = XMLoadFloat4x4(&World);
 			translation = XMMatrixMultiply(temp, Translate(0, 0, 0.01));
 		}
 
 		for (size_t i = offset+1; i < mOpaqueList.size(); i++)
 		{
-			if (World._41 == mOpaqueList[i]->World._41 && World._42 == mOpaqueList[i]->World._42 && World._43 == mOpaqueList[i]->World._43) {
+			if (World._41 <= mOpaqueList[i]->World._41+0.25 && World._41 >= mOpaqueList[i]->World._41 - 0.25 && World._42 <= mOpaqueList[i]->World._42+0.25 && World._42 >= mOpaqueList[i]->World._42 - 0.25 && World._43 <= mOpaqueList[i]->World._43+0.25 && World._43 >= mOpaqueList[i]->World._43 - 0.25) {
 				if (Type == "asteroid" && mOpaqueList[i]->Type == "player") {
 					gameOver = !gameOver;
 					mOpaqueList.clear();
@@ -96,7 +96,7 @@ public:
 	void Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12Device> device);
 	void BuildRenderOpBox();
 	void BuildRenderOpPyramide();
-	void BuildRenderOpProjectile(XMFLOAT4X4 playerPos);
+	void BuildRenderOpProjectile(float playerPosX, float playerPosY, float playerPosZ);
 	void BuildRenderOpCircle();
 	const std::vector<RenderItem*>& GetOpaqueItems();
 	std::vector<std::unique_ptr<RenderItem>>& GetAllItems();
