@@ -78,10 +78,10 @@ private:
 
     ComPtr<ID3D12PipelineState> mPSO = nullptr;
 
-    POINT mLastMousePos;
-
+    // Inputs
     InputManager inputManager;
 
+    // Camera
     XMVECTOR DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
     XMVECTOR DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
     XMVECTOR DefaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
