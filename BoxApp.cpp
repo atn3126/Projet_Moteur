@@ -79,7 +79,7 @@ void BoxApp::CameraInputs(const GameTimer& gt)
     //RUN
     if (key == VK_SHIFT)
     {
-        swift = 0.06f;
+        swift *= 2.0f;
     }
     //Walk
     if (key == 'Z')
