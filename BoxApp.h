@@ -43,6 +43,7 @@ private:
     virtual void OnResize()override;
     void CameraInputs(const GameTimer& gt);
     void Camera(const GameTimer& gt);
+    void CheckShoot(const GameTimer& gt);
     virtual void Update(const GameTimer& gt)override;
     void DrawRenderItems();
     virtual void Draw(const GameTimer& gt)override;
@@ -61,7 +62,8 @@ private:
 
     GameObject gameObject;
     std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
-
+    bool movePlayer = false;
+    bool rotatePlayer = false;
     //Constant Buffer
     std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
     std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;

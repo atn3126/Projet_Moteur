@@ -131,7 +131,6 @@
   <ItemGroup>
     <ClCompile Include="BoxApp.cpp" />
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CreateGeometry.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="GeometryGenerator.cpp" />
@@ -146,7 +145,6 @@
   <ItemGroup>
     <ClInclude Include="BoxApp.h" />
     <ClInclude Include="Camera.h" />
-    <ClInclude Include="Collision.h" />
     <ClInclude Include="CreateGeometry.h" />
     <ClInclude Include="d3dApp.h" />
     <ClInclude Include="d3dUtil.h" />

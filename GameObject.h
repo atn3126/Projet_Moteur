@@ -69,7 +69,6 @@ struct RenderItem : Transform {
 				else if (Type == "asteroid" && mOpaqueList[i]->Type == "asteroid") {
 					dontMove = !dontMove;
 				}
-
 			}
 		}
 		if(!dontMove) {
@@ -93,15 +92,16 @@ class GameObject {
 public:
 	GameObject();
 	~GameObject();
+	Microsoft::WRL::ComPtr<ID3D12Device> m_device;
 	void Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12Device> device);
-	void BuildRenderOpBox(ComPtr<ID3D12Device> device);
-	void BuildRenderOpPyramide(ComPtr<ID3D12Device> device);
-	void BuildRenderOpProjectile(ComPtr<ID3D12Device> device);
-	void BuildRenderOpCircle(ComPtr<ID3D12Device> device);
+	void BuildRenderOpBox();
+	void BuildRenderOpPyramide();
+	void BuildRenderOpProjectile(XMFLOAT4X4 playerPos);
+	void BuildRenderOpCircle();
 	const std::vector<RenderItem*>& GetOpaqueItems();
 	std::vector<std::unique_ptr<RenderItem>>& GetAllItems();
 	void SetOpaqueItems(std::vector<RenderItem*> OpaqueItems);
-	void BuildObjectConstantBuffers(ComPtr<ID3D12Device> device, std::unique_ptr<RenderItem>* sphere);
+	void BuildObjectConstantBuffers(std::unique_ptr<RenderItem>* sphere);
 
 private:
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
