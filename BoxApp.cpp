@@ -43,8 +43,9 @@ bool BoxApp::Initialize()
     BuildRootSignature();
     BuildShadersAndInputLayout();
     gameObject.Init(mCommandList,md3dDevice);
-    gameObject.BuildRenderOpBox(md3dDevice);
-    gameObject.BuildRenderOpCircle(md3dDevice);
+    gameObject.BuildRenderOpPyramide();
+
+    gameObject.BuildRenderOpCircle();
 
     BuildDescriptorHeaps();
     BuildConstantBuffers();
@@ -85,36 +86,50 @@ void BoxApp::CameraInputs(const GameTimer& gt)
     if (key == 'Z')
     {
         moveBackForward += swift;
+        movePlayer = true;
     }
     if (key == 'Q')
     {
         moveLeftRight -= swift;
+        movePlayer = true;
+
     }
     if (key == 'D')
     {
         moveLeftRight += swift;
+        movePlayer = true;
+
     }
     if (key == 'S')
     {
         moveBackForward -= swift;
+        movePlayer = true;
+
     }
     //ROTATE
-    if (key == VK_UP)
-    {
-        camPitch -= speed;
-    }
-    if (key == VK_DOWN)
-    {
-        camPitch += speed;
-    }
-    if (key == VK_LEFT)
-    {
-        camYaw -= speed;
-    }
-    if (key == VK_RIGHT)
-    {
-        camYaw += speed;
-    }
+    //if (key == VK_UP)
+    //{
+    //    camPitch -= speed;
+    //    rotatePlayer = true;
+    //}
+    //if (key == VK_DOWN)
+    //{
+    //    camPitch += speed;
+    //    rotatePlayer = true;
+
+    //}
+    //if (key == VK_LEFT)
+    //{
+    //    camYaw -= speed;
+    //    rotatePlayer = true;
+
+    //}
+    //if (key == VK_RIGHT)
+    //{
+    //    camYaw += speed;
+    //    rotatePlayer = true;
+
+    //}
 }
 
 void BoxApp::Camera(const GameTimer& gt)
@@ -132,6 +147,20 @@ void BoxApp::Camera(const GameTimer& gt)
 
     camPosition += moveLeftRight * camRight;
     camPosition += moveBackForward * camForward;
+
+    for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
+    {
+        if (gameObject.GetOpaqueItems()[i]->Type == "player" && movePlayer ) {
+           gameObject.GetOpaqueItems()[i]->World._41 += moveLeftRight;
+           gameObject.GetOpaqueItems()[i]->World._43 += moveBackForward;
+           movePlayer = false;
+        }
+        if (gameObject.GetOpaqueItems()[i]->Type == "player" && rotatePlayer)
+        {
+            XMStoreFloat4x4(&gameObject.GetOpaqueItems()[i]->World, XMMatrixMultiply(XMLoadFloat4x4(&gameObject.GetOpaqueItems()[i]->World), camRotationMatrix));
+            rotatePlayer = false;
+        }
+    }
 
     moveLeftRight = 0.0f;
     moveBackForward = 0.0f;
@@ -171,12 +200,34 @@ void BoxApp::Camera(const GameTimer& gt)
     mMainPassCB.DeltaTime = gt.DeltaTime();
    
     PassCB->CopyData(0, mMainPassCB);
+    for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
+    {
+        gameObject.SetOpaqueItems(gameObject.GetOpaqueItems()[i]->CheckCollision(gameObject.GetOpaqueItems(), i));
+    }
+}
+
+void BoxApp::CheckShoot(const GameTimer& gt) {
+    int key = inputManager.GetKeyPressed();
+
+    //RUN
+    if (key == 'R')
+    {
+        for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
+        {
+            if (gameObject.GetOpaqueItems()[i]->Type == "player")
+            {
+                gameObject.BuildRenderOpProjectile(gameObject.GetOpaqueItems()[i]->World._41, gameObject.GetOpaqueItems()[i]->World._42, gameObject.GetOpaqueItems()[i]->World._43);
+                
+            }
+        }
+    }
 }
 
 void BoxApp::Update(const GameTimer& gt)
 {
     CameraInputs(gt);
     Camera(gt);
+    CheckShoot(gt);
 }
 
 void BoxApp::DrawRenderItems() {
