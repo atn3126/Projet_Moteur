@@ -73,7 +73,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)Build$(ProjectName)$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(ProjectName)\Intermediate$(Configuration)\</IntDir>
-    <LibraryPath>C:\Users\emile\source\repos\Projet_Moteur\Build\Projet_Moteur\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Build\Projet_Moteur\Debug;$(LibraryPath)</LibraryPath>
     <ReferencePath>
     </ReferencePath>
   </PropertyGroup>
@@ -88,7 +88,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)Build$(ProjectName)$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(ProjectName)\Intermediate$(Configuration)\</IntDir>
-    <LibraryPath>C:\Users\emile\source\repos\Projet_Moteur\Build\Projet_Moteur\Debug;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(SolutionDir)Build\Projet_Moteur\Debug;$(LibraryPath)</LibraryPath>
     <ReferencePath>
     </ReferencePath>
   </PropertyGroup>
@@ -188,7 +188,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Test.cpp" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
