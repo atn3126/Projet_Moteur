@@ -45,30 +45,12 @@ LRESULT DataGlobal::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	}
 }
 
-int DataGlobal::run()
-{
-	MSG msg = { 0 };
-
-	m_timer.Reset();
-
-	while (msg.message != WM_QUIT)
-	{
-		// If there are Window messages then process them.
-		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-		{
- 			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+void DataGlobal::run()
+{	
 		// Otherwise, do animation/game stuff.
-		else
-		{
-			m_timer.Tick();
-			Update(m_timer);
-			Draw(m_timer);
-		}
-	}
-
-	return (int)msg.wParam;
+		m_timer.Tick();
+		Update(m_timer);
+		Draw(m_timer);
 }
 
 bool DataGlobal::Initialize()

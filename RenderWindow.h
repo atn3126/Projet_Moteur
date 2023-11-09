@@ -2,6 +2,7 @@
 #include "framework.h"
 #include "d3dUtil.h"
 #include "GameObject.h"
+#include "Camera.h"
 
 using namespace DirectX;
 
@@ -37,7 +38,8 @@ public:
     virtual bool                                        Initialize()                override;
     virtual void                                        Update(const GameTimer& gt) override;
     virtual void                                        Draw(const GameTimer& gt)   override;
-    
+    void                                                Camera(const GameTimer& gt);
+
 protected:
 
     virtual void                                        OnResize()                  override;
@@ -79,4 +81,35 @@ protected:
     UINT												m_passCbvOffset = 0;
 
     GameObject                                          gameObject;
+
+    bool                                                movePlayer = false;
+    bool                                                rotatePlayer = false;
+
+    XMVECTOR                                            DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+    XMVECTOR                                            DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+    XMVECTOR                                            DefaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+    XMVECTOR                                            camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+    XMVECTOR                                            camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+    XMVECTOR                                            camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+    XMVECTOR                                            camPosition = XMVectorSet(0.0f, 0.0f, -4.0f, 1.0f);
+
+    XMMATRIX                                            camRotationMatrix;
+    XMMATRIX                                            groundWorld;
+    XMMATRIX                                            camView;
+
+    XMVECTOR                                            getCam;
+
+    float                                               moveLeftRight = 0.0f;
+    float                                               moveBackForward = 0.0f;
+
+    XMVECTOR                                            camTarget;
+
+    float                                               camYaw = 0.0f;
+    float                                               camPitch = 0.0f;
+
+    XMFLOAT4X4                                          mWorld = MathHelper::Identity4x4();
+    XMFLOAT4X4                                          mView = MathHelper::Identity4x4();
+    XMFLOAT4X4                                          mProj = MathHelper::Identity4x4();
 };

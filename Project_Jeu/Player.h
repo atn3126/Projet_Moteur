@@ -2,6 +2,7 @@
 #include "framework.h"
 #include "GameObject.h"	
 #include "DataD3D12.h"
+#include "RenderWindow.h"
 
 class Player
 {
@@ -14,5 +15,8 @@ public:
 
 private:
 	GameObject gameObject;
+	GameTimer timer;
+
+	bool drawPlayer = true;
 
 };

@@ -12,7 +12,7 @@ public:
 	virtual LRESULT						MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	HWND								MainWnd()const	{	return m_hMainWnd;	}
 
-	int									run();
+	void								run();
 	virtual bool						Initialize();
 
 	float								AspectRatio()				const	{	return static_cast<float>(m_clientWidth) / m_clientHeight; }

@@ -10,9 +10,14 @@ Player::~Player()
 
 void Player::Init()
 {
-	gameObject.BuildRenderOpPyramide();
+	gameObject.BuildRenderOpCircle();
 }
 
 void Player::Update()
 {
+	if (drawPlayer)
+	{
+		Init();
+		drawPlayer = false;
+	}
 }

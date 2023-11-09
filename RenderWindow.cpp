@@ -21,8 +21,8 @@ bool RenderWindow::Initialize()
     BuildShadersAndInputLayout();
 
     gameObject.Init(m_commandList, m_d3dDevice);
-    /*gameObject.BuildRenderOpBox(m_d3dDevice);
-    gameObject.BuildRenderOpCircle(m_d3dDevice);*/
+    //gameObject.BuildRenderOpBox();
+    gameObject.BuildRenderOpCircle();
 
     BuildDescriptorHeaps();
     BuildConstantBuffers();
@@ -47,41 +47,66 @@ void RenderWindow::OnResize()
     XMStoreFloat4x4(&m_proj, P);
 }
 
-void RenderWindow::Update(const GameTimer& gt)
+void RenderWindow::Camera(const GameTimer& gt)
 {
-    // Convert Spherical to Cartesian coordinates.
-    float x = m_radius * sinf(m_phi) * cosf(m_theta);
-    float z = m_radius * sinf(m_phi) * sinf(m_theta);
-    float y = m_radius * cosf(m_phi);
+    camRotationMatrix = XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0);
+    camTarget = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
+    camTarget = XMVector3Normalize(camTarget);
+
+    XMMATRIX RotateYTempMatrix;
+    RotateYTempMatrix = XMMatrixRotationY(camYaw);
+
+    camRight = XMVector3TransformCoord(DefaultRight, RotateYTempMatrix);
+    camUp = XMVector3TransformCoord(camUp, RotateYTempMatrix);
+    camForward = XMVector3TransformCoord(DefaultForward, RotateYTempMatrix);
+
+    camPosition += moveLeftRight * camRight;
+    camPosition += moveBackForward * camForward;
+
+    for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
+    {
+        if (gameObject.GetOpaqueItems()[i]->Type == "player" && movePlayer) {
+            gameObject.GetOpaqueItems()[i]->World._41 += moveLeftRight;
+            gameObject.GetOpaqueItems()[i]->World._43 += moveBackForward;
+            movePlayer = false;
+        }
+        if (gameObject.GetOpaqueItems()[i]->Type == "player" && rotatePlayer)
+        {
+            XMStoreFloat4x4(&gameObject.GetOpaqueItems()[i]->World, XMMatrixMultiply(XMLoadFloat4x4(&gameObject.GetOpaqueItems()[i]->World), camRotationMatrix));
+            rotatePlayer = false;
+        }
+    }
+
+    moveLeftRight = 0.0f;
+    moveBackForward = 0.0f;
+
+    XMMATRIX world = XMLoadFloat4x4(&mWorld);
+    XMMATRIX proj = XMLoadFloat4x4(&mProj);
+
+    camTarget = camPosition + camTarget;
+    camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
 
     for (auto& e : gameObject.GetAllItems()) {
         XMMATRIX world = XMLoadFloat4x4(&e->World);
-
+        XMMATRIX worldViewProj = world;
         ObjectConstants objConstants;
-        XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(world));
+        XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
         e->mObjectCB->CopyData(0, objConstants);
     }
 
-    XMVECTOR pos = XMVectorSet(x, y, z, 1.0f);
-    XMVECTOR target = XMVectorZero();
-    XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-    XMMATRIX view = XMMatrixLookAtLH(pos, target, up);
-    XMMATRIX proj = XMLoadFloat4x4(&m_proj);
+    XMMATRIX viewProj = XMMatrixMultiply(camView, proj);
 
-    XMMATRIX viewProj = XMMatrixMultiply(view, proj);
-
-    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
+    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(camView), camView);
     XMMATRIX invProj = XMMatrixInverse(&XMMatrixDeterminant(proj), proj);
     XMMATRIX invViewProj = XMMatrixInverse(&XMMatrixDeterminant(viewProj), viewProj);
 
     PassConstants mMainPassCB;
-    XMStoreFloat4x4(&mMainPassCB.View, XMMatrixTranspose(view));
+    XMStoreFloat4x4(&mMainPassCB.View, XMMatrixTranspose(camView));
     XMStoreFloat4x4(&mMainPassCB.InvView, XMMatrixTranspose(invView));
     XMStoreFloat4x4(&mMainPassCB.Proj, XMMatrixTranspose(proj));
     XMStoreFloat4x4(&mMainPassCB.InvProj, XMMatrixTranspose(invProj));
     XMStoreFloat4x4(&mMainPassCB.ViewProj, XMMatrixTranspose(viewProj));
     XMStoreFloat4x4(&mMainPassCB.InvViewProj, XMMatrixTranspose(invViewProj));
-
     mMainPassCB.RenderTargetSize = XMFLOAT2((float)m_clientWidth, (float)m_clientHeight);
     mMainPassCB.InvRenderTargetSize = XMFLOAT2(1.0f / m_clientWidth, 1.0f / m_clientHeight);
     mMainPassCB.NearZ = 1.0f;
@@ -90,6 +115,15 @@ void RenderWindow::Update(const GameTimer& gt)
     mMainPassCB.DeltaTime = gt.DeltaTime();
 
     PassCB->CopyData(0, mMainPassCB);
+    for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
+    {
+        gameObject.SetOpaqueItems(gameObject.GetOpaqueItems()[i]->CheckCollision(gameObject.GetOpaqueItems(), i));
+    }
+}
+
+void RenderWindow::Update(const GameTimer& gt)
+{
+    Camera(m_timer);
 }
 
 void RenderWindow::Draw(const GameTimer& gt)

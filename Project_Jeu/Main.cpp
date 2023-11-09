@@ -19,8 +19,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance,
             return 0;
         }
 
-        theApp.run();
-        player.Init();
+        MSG msg = { 0 };
+
+        m_timer.Reset();
+
+        while (msg.message != WM_QUIT)
+        {
+            // If there are Window messages then process them.
+            if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+            else
+            {
+                theApp.run();
+            }
+        }
+
+        return (int)msg.wParam;
     }
     catch (DxException& e)
     {
