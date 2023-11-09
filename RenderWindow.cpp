@@ -21,8 +21,8 @@ bool RenderWindow::Initialize()
     BuildShadersAndInputLayout();
 
     gameObject.Init(m_commandList, m_d3dDevice);
-    gameObject.BuildRenderOpBox(m_d3dDevice);
-    gameObject.BuildRenderOpCircle(m_d3dDevice);
+    /*gameObject.BuildRenderOpBox(m_d3dDevice);
+    gameObject.BuildRenderOpCircle(m_d3dDevice);*/
 
     BuildDescriptorHeaps();
     BuildConstantBuffers();
