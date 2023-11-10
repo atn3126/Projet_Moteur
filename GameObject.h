@@ -66,9 +66,9 @@ struct RenderItem : Transform {
 					mOpaqueList.erase(mOpaqueList.begin() + (i-1));
 					mOpaqueList.erase(mOpaqueList.begin() + offset);
 				}
-				else if (Type == "asteroid" && mOpaqueList[i]->Type == "asteroid") {
+				/*else if (Type == "asteroid" && mOpaqueList[i]->Type == "asteroid") {
 					dontMove = !dontMove;
-				}
+				}*/
 			}
 		}
 		if(!dontMove) {

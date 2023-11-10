@@ -216,7 +216,8 @@ void BoxApp::Camera(const GameTimer& gt)
 	}
 }
 
-void BoxApp::CheckShoot(const GameTimer& gt) {
+void BoxApp::CheckShoot(const GameTimer& gt) 
+{
 	int key = inputManager.GetKeyPressed();
 
 	//RUN
@@ -235,14 +236,40 @@ void BoxApp::CheckShoot(const GameTimer& gt) {
 	}
 }
 
+void BoxApp::AsteroidSpawn(const GameTimer& gt)
+{
+	for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
+	{
+		if (gameObject.GetOpaqueItems()[i]->Type == "asteroid")
+		{
+			numAsteroid = true;
+		}
+	}
+
+	if (numAsteroid == false)
+	{
+		for (int i = 0; i < asteroid; i++)
+		{
+			gameObject.BuildRenderOpCircle();
+		}
+		asteroid++;
+	}
+	else
+	{
+		numAsteroid = false;
+	}
+}
+
 void BoxApp::Update(const GameTimer& gt)
 {
 	CameraInputs(gt);
 	Camera(gt);
 	CheckShoot(gt);
+	AsteroidSpawn(gt);
 }
 
-void BoxApp::DrawRenderItems() {
+void BoxApp::DrawRenderItems() 
+{
 
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
@@ -260,7 +287,6 @@ void BoxApp::DrawRenderItems() {
 
 void BoxApp::Draw(const GameTimer& gt)
 {
-
 	// Reuse the memory associated with command recording.
 	// We can only reset when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(mDirectCmdListAlloc->Reset());
@@ -330,7 +356,6 @@ void BoxApp::BuildDescriptorHeaps()
 
 void BoxApp::BuildConstantBuffers()
 {
-
 	mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(md3dDevice.Get(), 1, true);
 	PassCB = std::make_unique<UploadBuffer<PassConstants>>(md3dDevice.Get(), 1, true);
 
