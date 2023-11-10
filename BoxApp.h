@@ -48,7 +48,7 @@ private:
     void                                                                DrawRenderItems();
     virtual void                                                        Draw(const GameTimer& gt)override;
     void                                                                AsteroidSpawn(const GameTimer& gt);
-
+    void                                                                CheckProjectileLifeTime(const GameTimer& gt);
     void                                                                BuildDescriptorHeaps();
     void                                                                BuildConstantBuffers();
     void                                                                BuildRootSignature();
@@ -68,6 +68,9 @@ private:
     bool                                                                moveUpPlayer = false;
     bool                                                                moveDownPlayer = false;
     bool                                                                rotatePlayer = false;
+
+    float                                                               cd;
+    bool                                                                canShoot = true;
 
     //Constant Buffer
     std::unique_ptr<UploadBuffer<ObjectConstants>>                      mObjectCB = nullptr;

@@ -222,7 +222,7 @@ void BoxApp::CheckShoot(const GameTimer& gt)
 
 	//RUN
 
-	if (key == 'R')
+	if (key == 'R' && canShoot)
 	{
 		for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
 		{
@@ -232,6 +232,18 @@ void BoxApp::CheckShoot(const GameTimer& gt)
 				gameObject.BuildRenderOpProjectile(gameObject.GetOpaqueItems()[i]->World._41, gameObject.GetOpaqueItems()[i]->World._42, gameObject.GetOpaqueItems()[i]->World._43);
 
 			}
+		}
+		canShoot = false;
+		cd = 0;
+	}
+}
+
+void BoxApp::CheckProjectileLifeTime(const GameTimer& gt)
+{
+	for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
+	{
+		if (gameObject.GetOpaqueItems()[i]->Type == "projectile" && gameObject.GetOpaqueItems()[i]->Timer >= gameObject.GetOpaqueItems()[i]->lifeTime) {
+			gameObject.RemoveObject(i);
 		}
 	}
 }
@@ -266,6 +278,19 @@ void BoxApp::Update(const GameTimer& gt)
 	Camera(gt);
 	CheckShoot(gt);
 	AsteroidSpawn(gt);
+	cd += 0.05;
+	if (cd > 5) {
+		canShoot = true;
+	}
+	for (size_t i = 0; i < gameObject.GetOpaqueItems().size(); i++)
+	{
+		if (gameObject.GetOpaqueItems()[i]->Type == "projectile") {
+			gameObject.GetOpaqueItems()[i]->UpdateTimer();
+		}
+	}
+	CheckProjectileLifeTime(gt);
+	if (gameObject.getGameOver()) {
+	}
 }
 
 void BoxApp::DrawRenderItems() 

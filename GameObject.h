@@ -34,6 +34,11 @@ struct RenderItem : Transform {
 	bool gameOver;
 	bool RemoveAsteroid;
 	bool dontMove;
+	float Timer;
+	int lifeTime;
+	void UpdateTimer() {
+		Timer += 0.01;
+	}
 	std::vector<RenderItem*> CheckCollision(std::vector<RenderItem*> mOpaqueList,size_t offset) {
 		XMMATRIX translation = XMLoadFloat4x4(&World);
 		if (Type == "asteroid") {
@@ -47,13 +52,12 @@ struct RenderItem : Transform {
 
 		for (size_t i = offset+1; i < mOpaqueList.size(); i++)
 		{
-			if (World._41 <= mOpaqueList[i]->World._41+0.25 && World._41 >= mOpaqueList[i]->World._41 - 0.25 && World._42 <= mOpaqueList[i]->World._42+0.25 && World._42 >= mOpaqueList[i]->World._42 - 0.25 && World._43 <= mOpaqueList[i]->World._43+0.25 && World._43 >= mOpaqueList[i]->World._43 - 0.25) {
+			if (World._41 <= mOpaqueList[i]->World._41+0.60 && World._41 >= mOpaqueList[i]->World._41 - 0.60 && World._42 <= mOpaqueList[i]->World._42+0.60 && World._42 >= mOpaqueList[i]->World._42 - 0.60 && World._43 <= mOpaqueList[i]->World._43+0.60 && World._43 >= mOpaqueList[i]->World._43 - 0.60) {
 				if (Type == "asteroid" && mOpaqueList[i]->Type == "player") {
-					gameOver = !gameOver;
 					mOpaqueList.clear();
 				}
 				else if (Type == "player" && mOpaqueList[i]->Type == "asteroid") {
-					gameOver = !gameOver;
+
 					mOpaqueList.clear();
 				}
 				else if (Type == "asteroid" && mOpaqueList[i]->Type == "projectile") {
@@ -71,9 +75,7 @@ struct RenderItem : Transform {
 				}*/
 			}
 		}
-		if(!dontMove) {
-			XMStoreFloat4x4(&World, translation);
-		}
+		XMStoreFloat4x4(&World, translation);
 		return mOpaqueList;
 	};
 
@@ -102,14 +104,16 @@ public:
 	std::vector<std::unique_ptr<RenderItem>>& GetAllItems();
 	void SetOpaqueItems(std::vector<RenderItem*> OpaqueItems);
 	void BuildObjectConstantBuffers(std::unique_ptr<RenderItem>* sphere);
-
+	void RemoveObject(size_t index);
+	void setGameOver(bool newGameOver);
+	bool getGameOver();
 private:
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
 	UINT ObjIndex = 0;
 
 	//Stock RenderItem
 	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
-
+	bool gameOver = false;
 	std::vector<RenderItem*> mOpaqueRitems;
 	std::vector<RenderItem*> mTransparentRitems;
 	UINT mPassCbvOffset = 0;

@@ -16,8 +16,8 @@ void GameObject::Init(ComPtr<ID3D12GraphicsCommandList> cmdList, ComPtr<ID3D12De
 	CreateGeometry geoGen;
 	CreateGeometry::MeshData box = geoGen.CreateBox(.5f, 0.5f, 1.5f, 3);
 	CreateGeometry::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
-	CreateGeometry::MeshData pyramide = geoGen.CreatePyramide(1.f,1.f,0.3f,3);
-	CreateGeometry::MeshData projectile = geoGen.CreateCylinder(0.05f,0.05f,1.f,380,250);
+	CreateGeometry::MeshData pyramide = geoGen.CreatePyramide(1.f, 1.f, 0.3f, 3);
+	CreateGeometry::MeshData projectile = geoGen.CreateCylinder(0.05f, 0.05f, 1.f, 380, 250);
 	UINT boxVertexOffset = 0;
 	UINT boxIndexOffset = 0;
 	UINT sphereVertexOffset = (UINT)box.Vertices.size();
@@ -148,10 +148,10 @@ void GameObject::BuildRenderOpPyramide() {
 
 }
 
-void GameObject::BuildRenderOpProjectile(float playerPosX,float playerPosY,float playerPosZ) {
+void GameObject::BuildRenderOpProjectile(float playerPosX, float playerPosY, float playerPosZ) {
 	auto projectileRitem = std::make_unique<RenderItem>();
 	projectileRitem->ObjCBIndex = ObjIndex;
-
+	projectileRitem->lifeTime = 20;
 	projectileRitem->Geo = mGeometries["shapeGeo"].get();
 	projectileRitem->Type = "projectile";
 	projectileRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
@@ -171,6 +171,23 @@ void GameObject::BuildRenderOpProjectile(float playerPosX,float playerPosY,float
 }
 
 void GameObject::BuildRenderOpCircle() {
+	// Providing a seed value
+	srand((unsigned)time(NULL));
+	// Get a random number
+	float randomX = (float)rand() / (float)(RAND_MAX / (1.5f));
+	// Providing a seed value
+	srand((unsigned)time(NULL));
+
+	int randomSignX = 1 + (rand() % 2);
+
+	// Providing a seed value
+	srand((unsigned)time(NULL));
+	// Get a random number
+	float randomY = (float)rand() / (float)(RAND_MAX / (1.5f));
+
+	srand((unsigned)time(NULL));
+	int randomSignY = 1 + (rand() % 2);
+
 	auto leftSphereRitem = std::make_unique<RenderItem>();
 	leftSphereRitem->ObjCBIndex = ObjIndex;
 	leftSphereRitem->Geo = mGeometries["shapeGeo"].get();
@@ -180,7 +197,18 @@ void GameObject::BuildRenderOpCircle() {
 	leftSphereRitem->StartIndexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
 	leftSphereRitem->BaseVertexLocation = leftSphereRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
 	XMMATRIX temp = XMLoadFloat4x4(&leftSphereRitem->World);
-	XMStoreFloat4x4(&leftSphereRitem->World,XMMatrixMultiply(temp, leftSphereRitem->Translate(0, 0, -2)));
+	if (randomSignX == 1 && randomSignY == 1) {
+		XMStoreFloat4x4(&leftSphereRitem->World, XMMatrixMultiply(temp, leftSphereRitem->Translate(randomX, randomY, 5)));
+	}
+	else if (randomSignX == 2 && randomSignY == 1) {
+		XMStoreFloat4x4(&leftSphereRitem->World, XMMatrixMultiply(temp, leftSphereRitem->Translate(-randomX, randomY, 5)));
+	}
+	else if (randomSignX == 2 && randomSignY == 2) {
+		XMStoreFloat4x4(&leftSphereRitem->World, XMMatrixMultiply(temp, leftSphereRitem->Translate(-randomX, -randomY, 5)));
+	}
+	else if (randomSignX == 1 && randomSignY == 2) {
+		XMStoreFloat4x4(&leftSphereRitem->World, XMMatrixMultiply(temp, leftSphereRitem->Translate(randomX, -randomY, 5)));
+	}
 	BuildObjectConstantBuffers(&leftSphereRitem);
 
 	mAllRitems.push_back(std::move(leftSphereRitem));
@@ -207,6 +235,19 @@ void GameObject::SetOpaqueItems(std::vector<RenderItem*> OpaqueItems)
 void GameObject::BuildObjectConstantBuffers(std::unique_ptr<RenderItem>* object)
 {
 	object->get()->mObjectCB = std::make_unique<UploadBuffer<ObjectConstants>>(m_device.Get(), 1, true);
+}
+
+void GameObject::RemoveObject(size_t index)
+{
+	mOpaqueRitems.erase(mOpaqueRitems.begin() + index);
+}
+void GameObject::setGameOver(bool newGameOver)
+{
+	gameOver = newGameOver;
+}
+bool GameObject::getGameOver()
+{
+	return gameOver;
 }
 
 
